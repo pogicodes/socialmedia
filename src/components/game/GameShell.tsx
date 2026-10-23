@@ -74,7 +74,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const [door, setDoor] = useState<PlatformId | null>(null);
   const [open, setOpen] = useState<PlatformId | null>(null);
   const [dead, setDead] = useState(false);
-  const [modal, setModal] = useState<"follow" | "menu" | "credits" | "secret" | "share" | null>(null);
+  const [modal, setModal] = useState<"follow" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
   const [chest, setChest] = useState(false);
   const [complete, setComplete] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
@@ -358,19 +358,39 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
             <button type="button" className="pixel-btn font-pixel bg-white py-3 text-[10px]" onClick={onQuickView}>
               📋 QUICK VIEW
             </button>
-            <button
-              type="button"
-              className="pixel-btn font-pixel bg-white py-3 text-[10px]"
-              onClick={() => {
-                store.reset();
-                bridge.emit("newgame");
-                pauseFor(null);
-              }}
-            >
-              🔄 NEW GAME
+            <button type="button" className="pixel-btn font-pixel bg-white py-3 text-[10px]" onClick={() => pauseFor("reset")}>
+              🔄 RESET PROGRESS
             </button>
             <button type="button" className="pixel-btn font-pixel bg-white py-3 text-[10px]" onClick={() => pauseFor("credits")}>
               ⭐ CREDITS
+            </button>
+          </div>
+        </Modal>
+      )}
+      {modal === "reset" && (
+        <Modal title="RESET PROGRESS?" onClose={() => pauseFor("menu")}>
+          <p className="text-sm text-zinc-800">
+            Sigurado ka? This clears your hearts, {store.get().coins} coins, {store.get().cleared.length}/{levels.length} cleared
+            worlds and the hidden-beach unlock. Pogi goes back to the jeepney.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" className="pixel-btn font-pixel bg-white py-3 text-[10px]" onClick={() => pauseFor("menu")}>
+              CANCEL
+            </button>
+            <button
+              type="button"
+              className="pixel-btn font-pixel bg-[#e63946] py-3 text-[10px] text-white"
+              onClick={() => {
+                store.reset();
+                bridge.emit("newgame");
+                setComplete(false);
+                setChest(false);
+                setDoor(null);
+                pauseFor(null);
+                track("reset_progress");
+              }}
+            >
+              RESET
             </button>
           </div>
         </Modal>

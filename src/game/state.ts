@@ -63,8 +63,14 @@ export const store = {
     persist();
     listeners.forEach((fn) => fn());
   },
+  /** Wipe all progress (hearts, coins, cleared worlds, position, unlocks, this session's heals). */
   reset() {
     state = { ...fresh(), introSeen: true };
+    try {
+      sessionStorage.removeItem(HEALED_KEY);
+    } catch {
+      /* ignore */
+    }
     persist();
     listeners.forEach((fn) => fn());
   },
