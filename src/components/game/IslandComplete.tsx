@@ -68,10 +68,12 @@ export function ShareButtons({ coins, source }: { coins: number; source: string 
 
 export function IslandComplete({
   coins,
+  total,
   onHiddenBeach,
   onClose,
 }: {
   coins: number;
+  total: number;
   onHiddenBeach: () => void;
   onClose: () => void;
 }) {
@@ -104,7 +106,7 @@ export function IslandComplete({
         />
         <p className="font-pixel mt-3 text-[11px]">&ldquo;Salamat, idol!&rdquo;</p>
         <p className="mt-2 text-sm text-zinc-300">
-          All 6 worlds cleared with <strong className="text-yellow-300">{coins} coins</strong>. A bridge just appeared to the east…
+          All {total} worlds cleared with <strong className="text-yellow-300">{coins} coins</strong>. A bridge just appeared to the east…
         </p>
         <div className="mt-4 grid gap-2">
           <button type="button" onClick={onHiddenBeach} className="pixel-btn font-pixel bg-yellow-300 py-3 text-[10px] text-black">

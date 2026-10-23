@@ -99,7 +99,7 @@ export class WorldScene extends Phaser.Scene {
     this.load.spritesheet("coin", `${BASE}/sprites/coin.png`, { frameWidth: 10, frameHeight: 10 });
     this.load.spritesheet("smoke", `${BASE}/sprites/smoke.png`, { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet("ripple", `${BASE}/sprites/ripple.png`, { frameWidth: 16, frameHeight: 16 });
-    for (const id of ["facebook", "youtube", "tiktok", "instagram", "x", "github"]) {
+    for (const id of ["facebook", "youtube", "tiktok", "instagram", "x", "github", "website"]) {
       this.load.image(`building-${id}`, `${BASE}/buildings/${id}.png`);
       this.load.image(`sign-${id}`, `${BASE}/sprites/sign-${id}.png`);
     }
@@ -190,7 +190,7 @@ export class WorldScene extends Phaser.Scene {
         case "secret-bridge":
           this.secretTiles = JSON.parse(prop(o, "tiles") as string);
           this.lockLabel = this.add
-            .text(x + (o.width ?? 0) / 2, y + 2, "🔒 CLEAR ALL 6", {
+            .text(x + (o.width ?? 0) / 2, y + 2, "🔒 CLEAR ALL WORLDS", {
               fontFamily: this.font,
               fontSize: "6px",
               color: "#fff",

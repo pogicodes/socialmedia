@@ -55,6 +55,7 @@ const BUILDINGS = {
   instagram: [23, 0, 3, 3], // round adobe → Photo Booth
   x: [3, 7, 3, 3], // thatched nipa hut → Chismis Corner
   github: [12, 0, 4, 3], // red-roof temple → Code Dojo
+  website: [29, 0, 4, 3], // wooden house with signboard → Aklatan (blog)
 };
 await Promise.all([
   ...Object.entries(BUILDINGS).map(([id, [c, r, w, h]]) => crop(HOUSE, `buildings/${id}.png`, c, r, w, h)),
@@ -256,6 +257,7 @@ const SIGNS = {
   instagram: [icons.siInstagram, "#E1306C"],
   x: [icons.siX, "#111111"],
   github: [icons.siGithub, "#8B5CF6"],
+  website: [{ path: "M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" }, "#16A34A"],
 };
 await Promise.all(
   Object.entries(SIGNS).map(([id, [icon, color]]) =>
@@ -422,7 +424,7 @@ await asciiGrid(
 // mask bits: N=1, E=2, S=4, W=8
 {
   const W = 16 * 16;
-  const H = 32;
+  const H = 80;
   const buf = Buffer.alloc(W * H * 4);
   const put = (x, y, c) => {
     const i = (y * W + x) * 4;
@@ -473,6 +475,29 @@ await asciiGrid(
       put(4 * 16 + x, 16 + y, plankH);
       put(5 * 16 + x, 16 + y, y >= 13 ? (x % 8 < 2 ? POST : RAIL) : plankH);
     }
+  // grass-on-sand 3x3 (rows 2-4, cols 0-2): jagged grass fringe fading onto beach sand — no outline/water-like rim
+  const field = await sharp(p("Backgrounds/Tilesets/TilesetField.png")).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const fpx = (tc, tr, x, y) => {
+    const i = ((tr * 16 + y) * field.info.width + tc * 16 + x) * 4;
+    return [field.data[i], field.data[i + 1], field.data[i + 2]];
+  };
+  const J = [0, 1, 1, 0, -1, 0, 1, 2, 1, 0, 0, -1, 0, 1, 0, 0];
+  for (let cy = 0; cy < 3; cy++)
+    for (let cx = 0; cx < 3; cx++) {
+      const L = cx === 0, R = cx === 2, Tp = cy === 0, B = cy === 2;
+      const inside = (x, y) =>
+        (!L || x >= 6 + J[y & 15]) && (!R || x < 10 + J[(y + 5) & 15]) && (!Tp || y >= 6 + J[(x + 3) & 15]) && (!B || y < 10 + J[(x + 9) & 15]);
+      for (let y = 0; y < 16; y++)
+        for (let x = 0; x < 16; x++) {
+          let c;
+          if (inside(x, y)) {
+            c = fpx(1, 4, x, y); // grass centre
+            const rim = (xx, yy) => xx >= 0 && yy >= 0 && xx < 16 && yy < 16 && !inside(xx, yy);
+            if (rim(x - 1, y) || rim(x + 1, y) || rim(x, y - 1) || rim(x, y + 1)) c = c.map((v) => Math.round(v * 0.78));
+          } else c = fpx(1, 1, x, y); // sand centre
+          put(cx * 16 + x, (2 + cy) * 16 + y, c);
+        }
+    }
   await sharp(buf, { raw: { width: W, height: H, channels: 4 } }).png().toFile(out("tiles/custom.png"));
 }
 
@@ -484,7 +509,7 @@ const TILESETS = [
   { name: "field", image: "../tiles/field.png", w: 80, h: 240 },
   { name: "floor", image: "../tiles/floor.png", w: 352, h: 416 },
   { name: "nature", image: "../tiles/nature.png", w: 384, h: 336 },
-  { name: "custom", image: "../tiles/custom.png", w: 256, h: 32 },
+  { name: "custom", image: "../tiles/custom.png", w: 256, h: 80 },
 ];
 let first = 1;
 for (const ts of TILESETS) {
@@ -528,11 +553,12 @@ const ISLANDS = {
   instagram: [[6, 10, 17, 22], [7, 11, 16, 21]],
   x: [[41, 10, 52, 22], [42, 11, 51, 21]],
   github: [[22, 6, 36, 20], [23, 7, 35, 19]],
+  website: [[3, 44, 14, 53], [4, 45, 13, 52]],
   hidden: [[46, 43, 55, 51], null],
 };
 for (const [sand, grass] of Object.values(ISLANDS)) {
   rect9(ground, ...sand, "field", 0, 0);
-  if (grass) rect9(ground, ...grass, "field", 0, 3);
+  if (grass) rect9(ground, ...grass, "custom", 0, 2);
   walk(...sand);
 }
 walk(...ISLANDS.hidden[0], 1); // reachable only after unlock (bridge) — set walkable below
@@ -556,6 +582,7 @@ hBridge(15, 17, 31); // main ↔ YouTube islet (west)
 hBridge(42, 44, 31); // main ↔ TikTok islet (east)
 vBridge(11, 23, 28); // YouTube ↔ Instagram islet
 vBridge(46, 23, 28); // TikTok ↔ X islet
+hBridge(15, 17, 48); // main ↔ blog islet (south-west)
 hBridge(42, 45, 46, true); // main ↔ hidden beach (locked)
 
 // ---- roads (1 wide, orthogonal segments)
@@ -572,6 +599,7 @@ seg(33, 32, 33, 47); // loop east (+ to hidden beach)
 seg(18, 32, 41, 32); // west bridge ↔ east bridge
 seg(29, 28, 29, 32); // north to GitHub bridge
 seg(34, 47, 41, 47); // → hidden beach bridge
+seg(18, 49, 28, 49); // spawn beach → blog bridge
 // GitHub islet
 seg(29, 15, 29, 20);
 // YouTube islet
@@ -586,6 +614,8 @@ seg(48, 32, 48, 35);
 seg(47, 29, 47, 32);
 // X islet
 seg(47, 17, 47, 22);
+// blog islet
+seg(9, 49, 14, 49);
 // hidden beach
 seg(46, 47, 48, 47);
 
@@ -621,6 +651,7 @@ const PLACE = {
   instagram: { x: 11, y: 12, door: 1 },
   x: { x: 47, y: 12, door: 1 },
   github: { x: 28, y: 10, door: 1 },
+  website: { x: 6, y: 46, door: 1 },
 };
 const plazas = [];
 const occupied = new Uint8Array(W * H); // buildings, plazas, roads, bridges → no trees/decor
@@ -673,6 +704,8 @@ const trees = [
   ["coconut", 42, 21], ["coconut", 51, 21], ["coconut", 51, 11], ["tree", 43, 13], ["rock", 44, 19],
   // github islet (dojo garden)
   ["coconut", 23, 19], ["coconut", 35, 19], ["coconut", 23, 7], ["coconut", 35, 7], ["bamboo", 26, 11], ["bamboo", 26, 12], ["bamboo", 33, 11], ["bamboo", 33, 12],
+  // blog islet
+  ["coconut", 4, 52], ["coconut", 13, 52], ["coconut", 4, 45], ["tree", 12, 46], ["rock", 11, 52],
   // hidden beach
   ["coconut", 54, 44], ["coconut", 47, 50], ["coconut", 54, 50], ["rock", 52, 45],
 ];
@@ -706,6 +739,7 @@ const COINS = [
   [44, 15], [50, 18], // x
   [25, 14], [33, 15], [29, 8], // github
   [49, 49], // hidden beach
+  [11, 51], [16, 49], // blog islet + bridge
 ];
 for (const [x, y] of COINS) {
   if (blocked[idx(x, y)]) throw new Error(`coin on blocked tile ${x},${y}`);
@@ -716,7 +750,7 @@ for (const [x, y] of COINS) {
 const ENEMIES = [
   ["lamok", 20, 31, 4, 3], ["ipis", 35, 37, 3, 4], ["lamok", 20, 44, 3, 2],
   ["ipis", 4, 36, 3, 3], ["lamok", 51, 36, 3, 3], ["lamok", 14, 16, 2, 4],
-  ["ipis", 49, 18, 3, 3], ["lamok", 24, 8, 3, 3],
+  ["ipis", 49, 18, 3, 3], ["lamok", 24, 8, 3, 3], ["ipis", 8, 52, 2, 1],
 ];
 for (const [kind, x, y, w, h] of ENEMIES)
   obj({ name: kind, type: "enemy", x: x * T, y: y * T, width: w * T, height: h * T, properties: { kind } });

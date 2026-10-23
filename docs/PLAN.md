@@ -12,6 +12,7 @@ A Filipino-flavored, playable social hub for **@pogicodes**. **Sole goal: grow t
 | 4 | Instagram | Photo Booth | +1 (click) |
 | 5 | X | Chismis Corner | +1 (click) |
 | 6 | GitHub | Code Dojo — secret, far end of island | +1 (click) |
+| 7 | Website (blog, carlogino.com) | Aklatan — south-west islet, bridge from spawn beach | +1 (click) |
 
 Each content item heals once per session. Order drives building size/distance, HUD, Follow-all, quick view.
 

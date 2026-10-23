@@ -306,6 +306,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       {complete && !open && (
         <IslandComplete
           coins={store.get().coins}
+          total={levels.length}
           onHiddenBeach={() => {
             setComplete(false);
             bridge.emit("pause", false);

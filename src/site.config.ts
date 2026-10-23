@@ -43,6 +43,7 @@ export const platformIds: Record<string, PlatformId> = {
   Instagram: "instagram",
   X: "x",
   Facebook: "facebook",
+  Website: "website",
 };
 
 type FallbackLevel = Omit<Level, "iconPath" | "stats">;
@@ -113,5 +114,16 @@ export const fallbackLevels: FallbackLevel[] = [
     cta: "FOLLOW",
     color: "#8B5CF6",
     order: 6,
+  },
+  {
+    id: "website",
+    platform: "Website",
+    handle: "carlogino.com",
+    url: "https://carlogino.com/blog",
+    levelName: "World 7: Aklatan",
+    pitch: "Long-form tutorials and dev write-ups",
+    cta: "READ",
+    color: "#16A34A",
+    order: 7,
   },
 ];

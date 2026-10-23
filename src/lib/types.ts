@@ -4,7 +4,8 @@ export type PlatformId =
   | "tiktok"
   | "instagram"
   | "x"
-  | "facebook";
+  | "facebook"
+  | "website";
 
 export interface LevelStats {
   followers?: number;
