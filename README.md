@@ -40,6 +40,11 @@ Everything is fetched server-side in `src/lib/data.ts` (`"use cache"` + `cacheLi
 - Game state is in `localStorage` (`pogi:save:v1`); healed content per session in `sessionStorage`.
 - `?debug` exposes `window.__pogi` (`bridge`, `store`, `game`) for testing.
 
+## Icons & share images
+
+- Favicon / app / PWA icons are generated from `public/logo.png`: `node scripts/build-icons.mjs`.
+- Open Graph + Twitter card: `src/app/opengraph-image.tsx` (island bg from `assets/og-island.png`), re-exported by `twitter-image.tsx`.
+
 ## Env vars (Vercel → Project → Settings → Environment Variables)
 
 - `TEABLE_API_TOKEN`: Teable personal access token with **record read** scope, limited to base `bsekboWJc9EkYrxrX6I`.

@@ -9,16 +9,61 @@ const pixel = Press_Start_2P({ variable: "--font-press-start", weight: "400", su
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: site.title,
+  title: { default: site.title, template: `%s · ${site.brand}` },
   description: site.description,
+  applicationName: site.brand,
+  authors: [{ name: site.author.name, url: site.author.url }],
+  creator: site.author.name,
+  publisher: site.author.name,
+  keywords: [...site.keywords],
+  category: "technology",
+  referrer: "origin-when-cross-origin",
+  // `?level=…` deep links must not be indexed as separate pages.
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  formatDetection: { email: false, address: false, telephone: false },
   openGraph: {
     title: site.title,
     description: site.description,
-    url: site.url,
+    url: "/",
     siteName: site.brand,
-    type: "website",
+    locale: site.locale,
+    type: "profile",
+    firstName: "Carlo Gino",
+    lastName: "Catapang",
+    username: site.handle,
   },
-  twitter: { card: "summary_large_image", site: `@${site.handle}`, creator: `@${site.handle}` },
+  twitter: {
+    card: "summary_large_image",
+    title: site.title,
+    description: site.description,
+    site: `@${site.handle}`,
+    creator: `@${site.handle}`,
+  },
+  appleWebApp: { capable: true, title: site.brand, statusBarStyle: "black-translucent" },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    yandex: process.env.YANDEX_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+      : undefined,
+  },
+  other: {
+    // Facebook domain verification (Business Manager), optional.
+    ...(process.env.FACEBOOK_DOMAIN_VERIFICATION
+      ? { "facebook-domain-verification": process.env.FACEBOOK_DOMAIN_VERIFICATION }
+      : {}),
+  },
 };
 
 export const viewport: Viewport = {
