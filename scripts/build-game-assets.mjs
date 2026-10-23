@@ -49,7 +49,7 @@ const HOUSE = p("Backgrounds/Tilesets/TilesetHouse.png");
 const NATURE = p("Backgrounds/Tilesets/TilesetNature.png");
 /** Buildings: [file, col, row, w, h] in TilesetHouse */
 const BUILDINGS = {
-  facebook: [25, 10, 4, 4], // two-storey hall → Barangay Hall
+  facebook: [0, 0, 4, 3], // orange-roof house → Barangay Hall
   youtube: [16, 0, 3, 3], // shop with signboard → Sinehan
   tiktok: [19, 0, 4, 3], // lantern bar → Videoke Stage
   instagram: [23, 0, 3, 3], // round adobe → Photo Booth
@@ -64,7 +64,8 @@ await Promise.all([
   crop(NATURE, "sprites/tree.png", 6, 8, 2, 2),
   crop(NATURE, "sprites/bush-tree.png", 0, 0, 2, 2),
   crop(NATURE, "sprites/bamboo.png", 11, 8, 1, 3),
-  crop(NATURE, "sprites/rock.png", 13, 9, 1, 1),
+  crop(NATURE, "sprites/rock.png", 15, 9, 1, 1),
+  crop(NATURE, "sprites/boulder.png", 13, 8, 2, 2),
 ]);
 
 // ---------------------------------------------------------------- custom pixel sprites
@@ -456,25 +457,28 @@ await asciiGrid(
         put(mask * 16 + x, y, edge ? E : speck ? SP : D);
       }
   }
-  // bridges (row 1): col0 vertical (walk N–S), col1 horizontal (walk E–W)
+  // bridges (row 1): cols 0-2 vertical (walk N–S) left/mid/right, cols 3-5 horizontal (walk E–W) top/mid/bottom
   const WOOD = [176, 120, 70];
   const SEAM = [120, 78, 44];
   const RAIL = [86, 54, 30];
+  const POST = [60, 36, 20];
   for (let y = 0; y < 16; y++)
     for (let x = 0; x < 16; x++) {
-      // vertical
-      const v = x <= 1 || x >= 14 ? RAIL : y % 4 === 3 ? SEAM : WOOD;
-      put(x, 16 + y, v);
-      // horizontal
-      const h = y <= 1 || y >= 14 ? RAIL : x % 4 === 3 ? SEAM : WOOD;
-      put(16 + x, 16 + y, h);
+      const plankV = y % 4 === 3 ? SEAM : WOOD;
+      const plankH = x % 4 === 3 ? SEAM : WOOD;
+      put(0 * 16 + x, 16 + y, x <= 2 ? (y % 8 < 2 ? POST : RAIL) : plankV);
+      put(1 * 16 + x, 16 + y, plankV);
+      put(2 * 16 + x, 16 + y, x >= 13 ? (y % 8 < 2 ? POST : RAIL) : plankV);
+      put(3 * 16 + x, 16 + y, y <= 2 ? (x % 8 < 2 ? POST : RAIL) : plankH);
+      put(4 * 16 + x, 16 + y, plankH);
+      put(5 * 16 + x, 16 + y, y >= 13 ? (x % 8 < 2 ? POST : RAIL) : plankH);
     }
   await sharp(buf, { raw: { width: W, height: H, channels: 4 } }).png().toFile(out("tiles/custom.png"));
 }
 
 // ---------------------------------------------------------------- map (Tiled JSON)
-const W = 45;
-const H = 50;
+const W = 59;
+const H = 56;
 const TILESETS = [
   { name: "water", image: "../tiles/water.png", w: 448, h: 272 },
   { name: "field", image: "../tiles/field.png", w: 80, h: 240 },
@@ -495,7 +499,8 @@ const gid = (name, col, row) => {
 };
 const layer = () => new Array(W * H).fill(0);
 const inMap = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
-const set = (l, x, y, v) => inMap(x, y) && (l[y * W + x] = v);
+const idx = (x, y) => y * W + x;
+const set = (l, x, y, v) => inMap(x, y) && (l[idx(x, y)] = v);
 const rect9 = (l, x0, y0, x1, y1, ts, c0, r0) => {
   for (let y = y0; y <= y1; y++)
     for (let x = x0; x <= x1; x++) {
@@ -512,62 +517,92 @@ const roadsL = layer();
 const secretL = layer();
 const blocked = new Uint8Array(W * H).fill(1);
 const walk = (x0, y0, x1, y1, v = 0) => {
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inMap(x, y)) blocked[y * W + x] = v;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inMap(x, y)) blocked[idx(x, y)] = v;
 };
 
-// Main island
-rect9(ground, 2, 11, 33, 48, "field", 0, 0); // beach
-rect9(ground, 3, 12, 32, 43, "field", 0, 3); // grass
-walk(3, 12, 32, 47);
-// Dojo islet (north)
-rect9(ground, 11, 1, 23, 7, "field", 0, 0);
-rect9(ground, 12, 2, 22, 6, "field", 0, 3);
-walk(12, 2, 22, 6);
-walk(12, 7, 22, 7);
-// Hidden beach islet (east)
-rect9(ground, 37, 22, 43, 32, "field", 0, 0);
-walk(38, 23, 42, 31);
+// ---- islands: [sand rect, grass rect]
+const ISLANDS = {
+  main: [[18, 28, 41, 53], [19, 29, 40, 48]],
+  youtube: [[3, 29, 14, 41], [4, 30, 13, 40]],
+  tiktok: [[45, 29, 56, 41], [46, 30, 55, 40]],
+  instagram: [[6, 10, 17, 22], [7, 11, 16, 21]],
+  x: [[41, 10, 52, 22], [42, 11, 51, 21]],
+  github: [[22, 6, 36, 20], [23, 7, 35, 19]],
+  hidden: [[46, 43, 55, 51], null],
+};
+for (const [sand, grass] of Object.values(ISLANDS)) {
+  rect9(ground, ...sand, "field", 0, 0);
+  if (grass) rect9(ground, ...grass, "field", 0, 3);
+  walk(...sand);
+}
+walk(...ISLANDS.hidden[0], 1); // reachable only after unlock (bridge) — set walkable below
+walk(47, 44, 54, 50); // inner hidden beach
 
-// Pond
-const pond = [4, 35, 6, 38];
+// Pond (main island)
+const pond = [20, 40, 22, 42];
 rect9(ground, ...pond, "water", 0, 6);
 walk(...pond, 1);
 
-// Roads: list of orthogonal segments [x0,y0,x1,y1]
+// ---- bridges (3 wide). vertical: x0..x0+2, y0..y1 · horizontal: x0..x1, y0..y0+2
+const bridges = [];
+const vBridge = (x0, y0, y1, secret = false) => {
+  for (let y = y0; y <= y1; y++) for (let i = 0; i < 3; i++) bridges.push({ x: x0 + i, y, tile: [i, 1], secret });
+};
+const hBridge = (x0, x1, y0, secret = false) => {
+  for (let x = x0; x <= x1; x++) for (let i = 0; i < 3; i++) bridges.push({ x, y: y0 + i, tile: [3 + i, 1], secret });
+};
+vBridge(28, 21, 27); // main ↔ GitHub islet (north)
+hBridge(15, 17, 31); // main ↔ YouTube islet (west)
+hBridge(42, 44, 31); // main ↔ TikTok islet (east)
+vBridge(11, 23, 28); // YouTube ↔ Instagram islet
+vBridge(46, 23, 28); // TikTok ↔ X islet
+hBridge(42, 45, 46, true); // main ↔ hidden beach (locked)
+
+// ---- roads (1 wide, orthogonal segments)
 const road = new Uint8Array(W * H);
 const seg = (x0, y0, x1, y1) => {
   for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++)
-    for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) road[y * W + x] = 1;
+    for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) road[idx(x, y)] = 1;
 };
-seg(17, 40, 17, 46); // spawn → Barangay Hall plaza
-seg(8, 41, 27, 41); // boulevard
-seg(8, 13, 8, 41); // west road
-seg(27, 13, 27, 41); // east road
-seg(8, 13, 27, 13); // north road
-seg(17, 11, 17, 13); // to dojo bridge
-seg(17, 7, 17, 7); // dojo islet landing
-seg(9, 34, 9, 34); // → Sinehan plaza
-seg(24, 34, 26, 34); // → Videoke plaza
-seg(9, 23, 9, 23); // → Photo Booth plaza
-seg(24, 23, 26, 23); // → Chismis plaza
-seg(28, 27, 33, 27); // → secret bridge
-seg(37, 27, 39, 27); // hidden beach landing → chest
-const bridgeMain = [[17, 8], [17, 9], [17, 10]];
-const bridgeSecret = [[34, 27], [35, 27], [36, 27]];
-for (const [x, y] of bridgeMain) road[y * W + x] = 2;
-// every road/bridge tile is walkable (even across beach edges)
+// main island
+seg(29, 43, 29, 51); // spawn → Barangay Hall
+seg(25, 44, 33, 44); // loop bottom
+seg(25, 32, 25, 44); // loop west
+seg(33, 32, 33, 47); // loop east (+ to hidden beach)
+seg(18, 32, 41, 32); // west bridge ↔ east bridge
+seg(29, 28, 29, 32); // north to GitHub bridge
+seg(34, 47, 41, 47); // → hidden beach bridge
+// GitHub islet
+seg(29, 15, 29, 20);
+// YouTube islet
+seg(9, 32, 14, 32);
+seg(9, 32, 9, 35);
+seg(12, 29, 12, 32);
+// Instagram islet
+seg(12, 17, 12, 22);
+// TikTok islet
+seg(45, 32, 48, 32);
+seg(48, 32, 48, 35);
+seg(47, 29, 47, 32);
+// X islet
+seg(47, 17, 47, 22);
+// hidden beach
+seg(46, 47, 48, 47);
+
+for (const b of bridges) if (!b.secret) road[idx(b.x, b.y)] = 2;
 for (let i = 0; i < W * H; i++) if (road[i]) blocked[i] = 0;
+
+const isBridge = (x, y) => bridges.some((b) => b.x === x && b.y === y);
 for (let y = 0; y < H; y++)
   for (let x = 0; x < W; x++) {
-    if (road[y * W + x] !== 1) continue;
-    const r = (xx, yy) => inMap(xx, yy) && road[yy * W + xx] > 0;
-    const sec = (xx, yy) => bridgeSecret.some(([bx, by]) => bx === xx && by === yy);
-    const mask = (r(x, y - 1) ? 1 : 0) | (r(x + 1, y) || sec(x + 1, y) ? 2 : 0) | (r(x, y + 1) ? 4 : 0) | (r(x - 1, y) || sec(x - 1, y) ? 8 : 0);
+    if (road[idx(x, y)] !== 1) continue;
+    const r = (xx, yy) => inMap(xx, yy) && (road[idx(xx, yy)] > 0 || isBridge(xx, yy));
+    const mask = (r(x, y - 1) ? 1 : 0) | (r(x + 1, y) ? 2 : 0) | (r(x, y + 1) ? 4 : 0) | (r(x - 1, y) ? 8 : 0);
     set(roadsL, x, y, gid("custom", mask, 0));
   }
-for (const [x, y] of bridgeMain) set(roadsL, x, y, gid("custom", 0, 1));
-for (const [x, y] of bridgeSecret) set(secretL, x, y, gid("custom", 1, 1)); // hidden until unlocked; stays blocked
+for (const b of bridges) set(b.secret ? secretL : roadsL, b.x, b.y, gid("custom", ...b.tile));
 
+// ---- objects
 const objects = [];
 let oid = 1;
 const obj = (o) =>
@@ -578,84 +613,116 @@ const obj = (o) =>
     })),
   });
 
-// Buildings: top-left tile, door column offset
+// Buildings: top-left tile + door column offset (door is on the bottom row)
 const PLACE = {
-  facebook: { x: 16, y: 35, door: 1 }, // right in front of spawn
-  youtube: { x: 10, y: 30, door: 1 },
-  tiktok: { x: 21, y: 30, door: 1 },
-  instagram: { x: 10, y: 19, door: 1 },
-  x: { x: 21, y: 19, door: 1 },
-  github: { x: 16, y: 2, door: 1 }, // north islet, across the bridge
+  facebook: { x: 28, y: 38, door: 1 }, // main island, right in front of spawn
+  youtube: { x: 6, y: 31, door: 1 },
+  tiktok: { x: 49, y: 31, door: 1 },
+  instagram: { x: 11, y: 12, door: 1 },
+  x: { x: 47, y: 12, door: 1 },
+  github: { x: 28, y: 10, door: 1 },
 };
 const plazas = [];
+const occupied = new Uint8Array(W * H); // buildings, plazas, roads, bridges → no trees/decor
 for (const [id, pl] of Object.entries(PLACE)) {
   const [, , w, h] = BUILDINGS[id];
   walk(pl.x, pl.y, pl.x + w - 1, pl.y + h - 1, 1);
+  for (let y = pl.y; y < pl.y + h; y++) for (let x = pl.x; x < pl.x + w; x++) occupied[idx(x, y)] = 1;
   const dx = pl.x + pl.door;
-  rect9(detail, dx - 1, pl.y + h, dx + 1, pl.y + h + 1, "floor", 0, 7);
-  plazas.push([dx - 1, pl.y + h, dx + 1, pl.y + h + 1]);
+  const plaza = [dx - 1, pl.y + h, dx + 1, pl.y + h + 1];
+  rect9(detail, ...plaza, "floor", 0, 7);
+  plazas.push(plaza);
+  for (let y = plaza[1]; y <= plaza[3]; y++) for (let x = plaza[0]; x <= plaza[2]; x++) {
+    occupied[idx(x, y)] = 1;
+    if (road[idx(x, y)] === 1) set(roadsL, x, y, 0);
+  }
   obj({ name: id, type: "building", x: pl.x * T, y: pl.y * T, width: w * T, height: h * T, properties: { platform: id, doorX: dx, doorY: pl.y + h } });
   obj({ name: `sign-${id}`, type: "sign", x: (dx + 2) * T + 2, y: (pl.y + h) * T + 4, properties: { platform: id } });
+  occupied[idx(dx + 2, pl.y + h)] = 1;
 }
-const onPlaza = (x, y) => plazas.some(([a, b, c, d]) => x >= a && x <= c && y >= b && y <= d);
-// roads don't paint over plazas
-for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (onPlaza(x, y) && road[y * W + x] === 1) set(roadsL, x, y, 0);
+for (let i = 0; i < W * H; i++) if (road[i] || isBridge(i % W, Math.floor(i / W))) occupied[i] = 1;
 
-// Jeepney + spawn (beach)
-obj({ name: "jeepney", type: "jeepney", x: 19 * T, y: 44 * T, width: 48, height: 32 });
-walk(19, 45, 21, 45, 1);
-obj({ name: "spawn", type: "spawn", x: 17 * T + 8, y: 45 * T + 8 });
+// Spawn + jeepney (main beach)
+obj({ name: "spawn", type: "spawn", x: 29 * T + 8, y: 51 * T + 8 });
+obj({ name: "jeepney", type: "jeepney", x: 31 * T, y: 49 * T, width: 48, height: 32 });
+walk(31, 50, 33, 50, 1);
+for (let x = 31; x <= 33; x++) for (let y = 49; y <= 50; y++) occupied[idx(x, y)] = 1;
 
-// Hidden beach: chest + barrier on the secret bridge
-obj({ name: "chest", type: "chest", x: 40 * T + 8, y: 27 * T + 8 });
-walk(40, 27, 40, 27, 1);
-obj({ name: "secret-bridge", type: "secret-bridge", x: 34 * T, y: 27 * T, width: 3 * T, height: T, properties: { tiles: JSON.stringify(bridgeSecret) } });
+// Hidden beach: chest + locked bridge
+obj({ name: "chest", type: "chest", x: 50 * T + 8, y: 47 * T + 8 });
+walk(50, 47, 50, 47, 1);
+occupied[idx(50, 47)] = 1;
+const secretTiles = bridges.filter((b) => b.secret).map((b) => [b.x, b.y]);
+obj({ name: "secret-bridge", type: "secret-bridge", x: 42 * T, y: 46 * T, width: 4 * T, height: 3 * T, properties: { tiles: JSON.stringify(secretTiles) } });
 
-// Trees (blocked trunk tile)
+const free = (x, y) => inMap(x, y) && !blocked[idx(x, y)] && !occupied[idx(x, y)];
+
+// Trees & rocks (blocked at base tile)
 const trees = [
-  ["coconut", 4, 45], ["coconut", 9, 46], ["coconut", 13, 45], ["coconut", 24, 46], ["coconut", 28, 45], ["coconut", 31, 46],
-  ["coconut", 4, 14], ["coconut", 31, 15], ["coconut", 4, 28], ["coconut", 31, 31], ["coconut", 13, 3], ["coconut", 21, 3],
-  ["coconut", 39, 24], ["coconut", 42, 30], ["coconut", 38, 30],
-  ["tree", 13, 15], ["tree", 22, 15], ["tree", 13, 26], ["tree", 22, 26], ["bush-tree", 5, 20], ["bush-tree", 29, 37],
-  ["bamboo", 14, 37], ["bamboo", 21, 37], ["bamboo", 5, 31], ["bamboo", 30, 22], ["bamboo", 30, 23],
-  ["rock", 18, 22], ["rock", 11, 39], ["rock", 25, 39], ["rock", 41, 25],
+  // main
+  ["coconut", 20, 51], ["coconut", 23, 50], ["coconut", 26, 52], ["coconut", 36, 51], ["coconut", 39, 50],
+  ["coconut", 20, 30], ["coconut", 39, 30], ["coconut", 20, 46], ["coconut", 39, 44],
+  ["tree", 22, 30], ["tree", 36, 30], ["bamboo", 27, 39], ["bamboo", 32, 39], ["rock", 37, 40], ["boulder", 22, 37],
+  // youtube islet
+  ["coconut", 4, 40], ["coconut", 13, 40], ["coconut", 4, 30], ["tree", 9, 38], ["rock", 5, 37],
+  // tiktok islet
+  ["coconut", 55, 40], ["coconut", 46, 40], ["coconut", 55, 30], ["tree", 53, 37], ["rock", 50, 39],
+  // instagram islet
+  ["coconut", 7, 21], ["coconut", 16, 21], ["coconut", 7, 11], ["tree", 15, 13], ["rock", 8, 17],
+  // x islet
+  ["coconut", 42, 21], ["coconut", 51, 21], ["coconut", 51, 11], ["tree", 43, 13], ["rock", 44, 19],
+  // github islet (dojo garden)
+  ["coconut", 23, 19], ["coconut", 35, 19], ["coconut", 23, 7], ["coconut", 35, 7], ["bamboo", 26, 11], ["bamboo", 26, 12], ["bamboo", 33, 11], ["bamboo", 33, 12],
+  // hidden beach
+  ["coconut", 54, 44], ["coconut", 47, 50], ["coconut", 54, 50], ["rock", 52, 45],
 ];
 for (const [kind, tx, ty] of trees) {
-  if (road[ty * W + tx]) throw new Error(`tree on road at ${tx},${ty}`);
-  obj({ name: kind, type: "tree", x: tx * T + 8, y: (ty + 1) * T, properties: { kind } });
+  if (!free(tx, ty)) throw new Error(`tree ${kind} not on free tile ${tx},${ty}`);
+  obj({ name: kind, type: "tree", x: tx * T + (kind === "boulder" ? 16 : 8), y: (ty + 1) * T, properties: { kind } });
   walk(tx, ty, tx, ty, 1);
+  if (kind === "boulder") walk(tx + 1, ty, tx + 1, ty, 1);
+  occupied[idx(tx, ty)] = 1;
 }
 
-// Decor (flowers/tufts) off roads & plazas
+// Decor (flowers/tufts) on free grass
 const DECOR = [gid("nature", 0, 11), gid("nature", 1, 11), gid("nature", 3, 11), gid("nature", 4, 10), gid("nature", 5, 10), gid("nature", 8, 10), gid("nature", 2, 11)];
+const onGrass = (x, y) =>
+  Object.values(ISLANDS).some(([, g]) => g && x > g[0] && x < g[2] && y > g[1] && y < g[3]);
 let seed = 11;
 const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
-for (let i = 0; i < 90; i++) {
-  const x = 3 + Math.floor(rnd() * 30);
-  const y = 12 + Math.floor(rnd() * 31);
-  if (!blocked[y * W + x] && !detail[y * W + x] && !road[y * W + x]) set(detail, x, y, DECOR[Math.floor(rnd() * DECOR.length)]);
+for (let i = 0; i < 260; i++) {
+  const x = Math.floor(rnd() * W);
+  const y = Math.floor(rnd() * H);
+  if (onGrass(x, y) && free(x, y) && !detail[idx(x, y)] && rnd() < 0.55) set(detail, x, y, DECOR[Math.floor(rnd() * DECOR.length)]);
 }
 
-// Coins (20): along roads, fields, islets
+// Coins (20)
 const COINS = [
-  [17, 43], [12, 41], [23, 41], [8, 37], [27, 37], [15, 33], [19, 27], [8, 29], [27, 29], [12, 24],
-  [23, 24], [17, 17], [8, 17], [27, 17], [14, 13], [20, 13], [17, 5], [13, 5], [21, 5], [40, 29],
+  [29, 46], [22, 35], [36, 35], [25, 40], [29, 30], // main
+  [16, 32], [43, 32], [29, 24], // on bridges
+  [10, 37], [5, 34], // youtube
+  [53, 35], [48, 38], // tiktok
+  [9, 15], [14, 18], // instagram
+  [44, 15], [50, 18], // x
+  [25, 14], [33, 15], [29, 8], // github
+  [49, 49], // hidden beach
 ];
 for (const [x, y] of COINS) {
-  if (blocked[y * W + x]) throw new Error(`coin on blocked tile ${x},${y}`);
+  if (blocked[idx(x, y)]) throw new Error(`coin on blocked tile ${x},${y}`);
   obj({ name: "coin", type: "coin", x: x * T + 8, y: y * T + 8 });
 }
 
-// Enemies (patrol areas ≥2 tiles from doors)
+// Enemies — patrol areas kept off bridges and ≥2 tiles from doors
 const ENEMIES = [
-  ["lamok", 11, 14, 4, 3], ["lamok", 19, 25, 5, 3], ["lamok", 23, 36, 3, 3],
-  ["ipis", 18, 15, 4, 4], ["ipis", 12, 36, 2, 3], ["ipis", 13, 8 - 2, 3, 1],
+  ["lamok", 20, 31, 4, 3], ["ipis", 35, 37, 3, 4], ["lamok", 20, 44, 3, 2],
+  ["ipis", 4, 36, 3, 3], ["lamok", 51, 36, 3, 3], ["lamok", 14, 16, 2, 4],
+  ["ipis", 49, 18, 3, 3], ["lamok", 24, 8, 3, 3],
 ];
 for (const [kind, x, y, w, h] of ENEMIES)
   obj({ name: kind, type: "enemy", x: x * T, y: y * T, width: w * T, height: h * T, properties: { kind } });
 
 const collision = Array.from(blocked, (b) => (b ? gid("water", 1, 1) : 0));
-for (const [x, y] of bridgeSecret) collision[y * W + x] = gid("water", 1, 1);
+for (const [x, y] of secretTiles) collision[idx(x, y)] = gid("water", 1, 1);
 
 const tileLayer = (id, name, data, visible = true) => ({ id, name, type: "tilelayer", width: W, height: H, x: 0, y: 0, opacity: 1, visible, data });
 const map = {
@@ -720,11 +787,12 @@ fs.writeFileSync(out("map/island.json"), JSON.stringify(map));
     .composite(comps)
     .png()
     .toBuffer();
+  await sharp(full).png().toFile(path.resolve("assets/island-full.png"));
   // OG crop: south part of the main island (spawn, Barangay Hall, roads), 1200×630 nearest-neighbour
-  const cw = 28 * T;
+  const cw = 38 * T;
   const ch = Math.round((cw * 630) / 1200);
   await sharp(full)
-    .extract({ left: 4 * T, top: 47 * T - ch, width: cw, height: ch })
+    .extract({ left: 10 * T, top: 33 * T - 4, width: cw, height: ch })
     .resize(1200, 630, { kernel: "nearest" })
     .png()
     .toFile(path.resolve("assets/og-island.png"));

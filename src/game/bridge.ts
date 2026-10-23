@@ -40,4 +40,6 @@ export const bridge = {
   },
   /** Joystick vector written by React, read by Phaser every frame. */
   input: { x: 0, y: 0 },
+  /** Level names + priority order (from Teable), set by React before the game boots. */
+  meta: { names: {} as Partial<Record<PlatformId, string>>, order: [] as PlatformId[] },
 };

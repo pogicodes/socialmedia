@@ -46,6 +46,7 @@ No GitHub token. Only secret: `TEABLE_API_TOKEN` (read-only).
 - **ISLAND COMPLETE!** (all 6 cleared): confetti, jeepney horn, "Salamat, idol!", unlocks hidden beach with owner message + newest project link (Teable `Secret`). Share-your-score button.
 - **Persistence:** `localStorage` (hearts, coins, cleared, position); "New game" in pause menu.
 - **Copy:** mostly English UI + Taglish flavor lines ("Uy!", "Aray!", "Ayos!", "Tara, nood tayo!").
+- **Pogi's idle lines (priority order):** low hearts → "watch a video to heal"; next uncleared building in channel order with a direction arrow ("Tara sa Barangay Hall! ↑"); hidden beach once unlocked; only after everything (incl. chest) → dev/creator flavor lines ("Render 99%…", "Thumbnail muna bago code.").
 - **Sound:** pack SFX + chiptune, off by default, toggle remembered.
 
 ## Quick view (never lose a follower)
@@ -59,7 +60,7 @@ Auto quick view when: reduced motion (with "Play anyway"), no WebGL, very slow d
 - ✅ Step 2 — Walkable island (Phaser 4): joystick + tap-to-walk + keyboard, doors → level cards, lamok/ipis, hearts, coins, ★ CLEARED, heal table, CONTINUE? screen, Follow all, menu, credits, Taglish lines, sound (off by default), auto quick view.
   - "Watched" = embed open & tab visible for 15s (FB/TikTok don't expose reliable progress without heavy SDKs).
 - ✅ Step 3 — ISLAND COMPLETE (confetti, "Salamat, idol!"), secret bridge to the hidden beach + chest → Teable `Secret` (`tblLdewX1xlberGLnUc`), share score (native share / Facebook / X / copy), OG image rendered from the island.
-- Map v2: custom 16×24 Pogi (jersey + tsinelas), Barangay Hall right in front of spawn, road network (auto-walk prefers roads), Code Dojo on a north islet via bridge.
+- Map v3 (archipelago): main island (spawn + jeepney + Barangay Hall a few steps up the road) linked by 3-wide bridges to YouTube (W), TikTok (E), Code Dojo (N); Instagram via YouTube, X via TikTok; hidden beach (SE) bridge appears on ISLAND COMPLETE. Roads everywhere (auto-walk prefers them); manual steering has corner assist. Custom 16×24 Pogi (jersey + tsinelas).
 
 ## Phasing
 

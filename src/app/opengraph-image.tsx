@@ -23,21 +23,21 @@ export default async function OpengraphImage() {
         <div
           style={{
             position: "absolute",
-            top: 32,
-            left: 32,
+            bottom: 28,
+            left: 28,
             display: "flex",
             alignItems: "center",
             gap: 24,
             background: "white",
             border: "8px solid black",
             boxShadow: "8px 8px 0 black",
-            padding: "16px 28px 16px 16px",
+            padding: "12px 22px 12px 12px",
           }}
         >
-          <img src={src(logo)} width={96} height={96} alt="" />
+          <img src={src(logo)} width={72} height={72} alt="" />
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ fontSize: 44, color: "black" }}>{site.brand}</div>
-            <div style={{ fontSize: 20, color: "#1877F2" }}>PLAY POGI ISLAND ▶</div>
+            <div style={{ fontSize: 34, color: "black" }}>{site.brand}</div>
+            <div style={{ fontSize: 16, color: "#1877F2" }}>PLAY POGI ISLAND ▶</div>
           </div>
         </div>
       </div>

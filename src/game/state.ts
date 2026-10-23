@@ -13,6 +13,7 @@ export interface GameState {
   pos: { x: number; y: number } | null;
   introSeen: boolean;
   completeSeen: boolean;
+  secretSeen: boolean;
 }
 
 const SAVE_KEY = "pogi:save:v1";
@@ -26,6 +27,7 @@ const fresh = (): GameState => ({
   pos: null,
   introSeen: false,
   completeSeen: false,
+  secretSeen: false,
 });
 
 let state: GameState = fresh();

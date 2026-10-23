@@ -95,6 +95,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       bridge.on("door", (d) => setDoor(d)),
       bridge.on("chest", (c) => setChest(c)),
       bridge.on("secret", () => {
+        store.set({ secretSeen: true });
         setModal("secret");
         bridge.emit("pause", true);
         track("secret_open");
@@ -113,6 +114,8 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
         track("game_over");
       }),
     ];
+    bridge.meta.names = Object.fromEntries(levels.map((l) => [l.id, shortName(l.levelName)]));
+    bridge.meta.order = levels.map((l) => l.id);
     if (new URLSearchParams(location.search).has("debug"))
       (window as unknown as { __pogi: unknown }).__pogi = { bridge, store };
     import("@/game/createGame")
@@ -132,7 +135,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       game?.destroy(true);
       document.body.style.overflow = prev;
     };
-  }, [onFail]);
+  }, [onFail, levels]);
 
   // after ready: sound pref, deep link, intro
   useEffect(() => {

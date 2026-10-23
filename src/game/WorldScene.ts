@@ -12,6 +12,22 @@ const BASE = "/game";
 type Dir = "down" | "up" | "left" | "right";
 const DIR_COL: Record<Dir, number> = { down: 0, up: 1, left: 2, right: 3 };
 
+/** After everything is done: what a dev + content creator does all day. */
+const CREATOR_LINES = [
+  "Nag-eedit pa ako ng vlog…",
+  "Render 99%… sana 'di mag-crash.",
+  "git push… sa Friday? Bahala na.",
+  "Thumbnail muna bago code.",
+  "Kape muna. ☕",
+  "Copy-paste developer, proud!",
+  "Salamat StackOverflow at ChatGPT.",
+  "May bagong short mamaya, abangan!",
+  "Bug ba 'yan o feature?",
+  "Nagre-reply sa comments, saglit.",
+  "Ship it! 🚀",
+  "Script ng next video, loading…",
+];
+
 interface Door {
   platform: PlatformId;
   tx: number;
@@ -58,6 +74,7 @@ export class WorldScene extends Phaser.Scene {
   private font = "monospace";
   private unsubs: (() => void)[] = [];
   private saveTimer = 0;
+  private spoke = false;
   private roads!: Phaser.Tilemaps.TilemapLayer;
   private secretLayer!: Phaser.Tilemaps.TilemapLayer;
   private secretTiles: [number, number][] = [];
@@ -86,7 +103,7 @@ export class WorldScene extends Phaser.Scene {
       this.load.image(`building-${id}`, `${BASE}/buildings/${id}.png`);
       this.load.image(`sign-${id}`, `${BASE}/sprites/sign-${id}.png`);
     }
-    for (const k of ["jeepney", "coconut", "tree", "bush-tree", "bamboo", "rock", "dojo-sign"])
+    for (const k of ["jeepney", "coconut", "tree", "bush-tree", "bamboo", "rock", "boulder", "dojo-sign"])
       this.load.image(k, `${BASE}/sprites/${k}.png`);
     for (const a of ["music", "coin", "hit", "heal", "open", "clear", "gameover", "step", "complete"])
       this.load.audio(a, `${BASE}/audio/${a}.mp3`);
@@ -262,6 +279,7 @@ export class WorldScene extends Phaser.Scene {
       this.chestZone = undefined;
       this.inChest = false;
       this.paused = false;
+      this.spoke = false;
     });
 
     bridge.emit("ready");
@@ -372,6 +390,8 @@ export class WorldScene extends Phaser.Scene {
         color: "#000",
         backgroundColor: "#fff",
         padding: { x: 3, y: 2 },
+        wordWrap: { width: 120 },
+        align: "center",
         resolution: 4,
       })
       .setOrigin(0.5, 1)
@@ -401,6 +421,27 @@ export class WorldScene extends Phaser.Scene {
       this.sfx("clear");
       this.cameras.main.flash(150, 255, 240, 160);
     }
+  }
+
+  /** Priority: what the player should do next. Creator flavor only once everything is done. */
+  private idleLine(): string {
+    const s = store.get();
+    const { names, order } = bridge.meta;
+    if (s.hearts <= 1) return "Konti na lang heart ko! Nood tayo ng video para gumaling.";
+    const next = order.find((id) => !s.cleared.includes(id) && this.doors.some((d) => d.platform === id));
+    if (next) {
+      const d = this.doors.find((dd) => dd.platform === next)!;
+      const name = names[next] ?? next;
+      return `Tara sa ${name}! ${this.arrowTo(d.tx * T + 8, d.ty * T + 8)}`;
+    }
+    if (this.unlocked && !s.secretSeen && this.chest) return `May tulay na papuntang hidden beach! ${this.arrowTo(this.chest.x, this.chest.y)}`;
+    return Phaser.Utils.Array.GetRandom(CREATOR_LINES);
+  }
+
+  private arrowTo(x: number, y: number) {
+    const a = Phaser.Math.Angle.Between(this.player.x, this.player.y + FEET, x, y);
+    const arrows = ["→", "↘", "↓", "↙", "←", "↖", "↑", "↗"];
+    return arrows[(Math.round(a / (Math.PI / 4)) + 8) % 8];
   }
 
   // ============================================================ actions
@@ -577,7 +618,27 @@ export class WorldScene extends Phaser.Scene {
     } else if (Math.abs(mx) > Math.abs(my)) vx = Math.sign(mx);
     else if (my) vy = Math.sign(my);
 
-    this.player.setVelocity(vx * SPEED, vy * SPEED);
+    // Corner assist (manual steering): slide around tile corners so gaps/bridges are easy to enter.
+    let ax = 0;
+    let ay = 0;
+    if (!this.path.length && (vx || vy)) {
+      const f = this.feet();
+      const t = this.tileOf(f.x, f.y);
+      if (vy) {
+        const off = f.x - (t.x * T + 8);
+        const side = Math.sign(off);
+        if (side && this.isBlocked(t.x + side, t.y + vy) && !this.isBlocked(t.x, t.y + vy)) ax = -side;
+        else if (this.isBlocked(t.x, t.y + vy) && Math.abs(off) > 3 && !this.isBlocked(t.x + side, t.y + vy) && !this.isBlocked(t.x + side, t.y)) ax = side;
+        if (ax) ax *= Math.min(1, Math.abs(off) / 4);
+      } else {
+        const off = f.y - (t.y * T + 8);
+        const side = Math.sign(off);
+        if (side && this.isBlocked(t.x + vx, t.y + side) && !this.isBlocked(t.x + vx, t.y)) ay = -side;
+        else if (this.isBlocked(t.x + vx, t.y) && Math.abs(off) > 3 && !this.isBlocked(t.x + vx, t.y + side) && !this.isBlocked(t.x, t.y + side)) ay = side;
+        if (ay) ay *= Math.min(1, Math.abs(off) / 4);
+      }
+    }
+    this.player.setVelocity((vx + ax * 0.8) * SPEED, (vy + ay * 0.8) * SPEED);
     if (vx || vy) {
       this.dir = vx > 0 ? "right" : vx < 0 ? "left" : vy > 0 ? "down" : "up";
       this.player.anims.play(`walk-${this.dir}`, true);
@@ -586,9 +647,10 @@ export class WorldScene extends Phaser.Scene {
     } else {
       this.player.anims.stop();
       this.player.setFrame(DIR_COL[this.dir]);
-      if (time - this.lastMove > 6000) {
+      if (time - this.lastMove > (this.spoke ? 7000 : 2500)) {
         this.lastMove = time;
-        this.say(Phaser.Utils.Array.GetRandom(["Ang pogi ko talaga.", "*ayos ng buhok*", "Tara, explore tayo!"]));
+        this.spoke = true;
+        this.say(this.idleLine(), 3200);
       }
     }
     this.player.setDepth(this.player.y + FEET);
