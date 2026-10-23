@@ -2,6 +2,7 @@ import {
   siFacebook,
   siGithub,
   siInstagram,
+  siThreads,
   siTiktok,
   siX,
   siYoutube,
@@ -21,4 +22,5 @@ export const iconPaths: Record<PlatformId, string> = {
   x: siX.path,
   facebook: siFacebook.path,
   website: BOOK_PATH,
+  threads: siThreads.path,
 };

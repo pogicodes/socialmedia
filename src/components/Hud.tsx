@@ -3,6 +3,7 @@
 import { track } from "@vercel/analytics";
 import { Icon } from "./Icon";
 import type { Level } from "@/lib/types";
+import { navExclude } from "@/site.config";
 
 export function Hud({
   levels,
@@ -19,7 +20,7 @@ export function Hud({
       className="fixed inset-x-0 bottom-0 z-30 border-t-4 border-black bg-[#1b1b2f] px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
     >
       <div className="mx-auto flex max-w-xl items-center justify-between gap-1">
-        {levels.map((l) => (
+        {levels.filter((l) => !navExclude.includes(l.id)).map((l) => (
           <a
             key={l.id}
             href={l.url}

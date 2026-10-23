@@ -56,6 +56,7 @@ const BUILDINGS = {
   x: [3, 7, 3, 3], // thatched nipa hut → Chismis Corner
   github: [12, 0, 4, 3], // red-roof temple → Code Dojo
   website: [29, 0, 4, 3], // wooden house with signboard → Aklatan (blog)
+  threads: [4, 0, 4, 3], // sand-plaster house → Tambayan (Threads)
 };
 await Promise.all([
   ...Object.entries(BUILDINGS).map(([id, [c, r, w, h]]) => crop(HOUSE, `buildings/${id}.png`, c, r, w, h)),
@@ -258,6 +259,7 @@ const SIGNS = {
   x: [icons.siX, "#111111"],
   github: [icons.siGithub, "#8B5CF6"],
   website: [{ path: "M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" }, "#16A34A"],
+  threads: [icons.siThreads, "#101010"],
 };
 await Promise.all(
   Object.entries(SIGNS).map(([id, [icon, color]]) =>
@@ -502,7 +504,7 @@ await asciiGrid(
 }
 
 // ---------------------------------------------------------------- map (Tiled JSON)
-const W = 55;
+const W = 69;
 const H = 50;
 const TILESETS = [
   { name: "water", image: "../tiles/water.png", w: 448, h: 272 },
@@ -554,6 +556,7 @@ const ISLANDS = {
   x: [[41, 8, 52, 19], [42, 9, 51, 18]],
   github: [[21, 9, 34, 21], [22, 10, 33, 20]],
   website: [[5, 38, 16, 48], [6, 39, 15, 47]],
+  threads: [[56, 8, 67, 19], [57, 9, 66, 18]],
   hidden: [[41, 38, 50, 46], null],
 };
 for (const [sand, grass] of Object.values(ISLANDS)) {
@@ -583,6 +586,7 @@ hBridge(38, 40, 29); // main ↔ TikTok islet (east)
 vBridge(12, 20, 23); // YouTube ↔ Instagram islet
 vBridge(42, 20, 23); // TikTok ↔ X islet
 hBridge(17, 19, 42); // main ↔ blog islet (south-west)
+hBridge(53, 55, 13); // X ↔ Threads islet (east)
 hBridge(38, 40, 41, true); // main ↔ hidden beach (locked)
 
 // ---- roads (1 wide, orthogonal segments)
@@ -613,6 +617,9 @@ seg(43, 24, 43, 30);
 // X islet
 seg(43, 14, 43, 19);
 seg(44, 14, 45, 14);
+seg(49, 14, 52, 14); // → Threads bridge
+// Threads islet
+seg(56, 14, 60, 14);
 // blog islet
 seg(10, 43, 16, 43);
 // hidden beach
@@ -651,6 +658,7 @@ const PLACE = {
   x: { x: 46, y: 10, door: 1 },
   github: { x: 27, y: 12, door: 1 },
   website: { x: 7, y: 40, door: 1 },
+  threads: { x: 61, y: 11, door: 1 },
 };
 const plazas = [];
 const occupied = new Uint8Array(W * H); // buildings, plazas, roads, bridges → no trees/decor
@@ -705,6 +713,8 @@ const trees = [
   ["coconut", 22, 20], ["coconut", 33, 20], ["coconut", 22, 10], ["coconut", 33, 10], ["bamboo", 25, 13], ["bamboo", 25, 14], ["bamboo", 32, 13], ["bamboo", 32, 14],
   // blog islet
   ["coconut", 6, 47], ["coconut", 15, 47], ["coconut", 6, 39], ["tree", 14, 40], ["rock", 13, 46],
+  // threads islet
+  ["coconut", 57, 18], ["coconut", 66, 18], ["coconut", 66, 9], ["tree", 57, 10], ["rock", 64, 17],
   // hidden beach
   ["coconut", 49, 39], ["coconut", 42, 45], ["coconut", 49, 45], ["rock", 47, 40],
 ];
@@ -739,6 +749,7 @@ const COINS = [
   [24, 17], [31, 17], [28, 11], // github
   [12, 45], [7, 46], // blog
   [44, 44], // hidden beach
+  [58, 16], [65, 13], [54, 14], // threads islet + bridge
 ];
 for (const [x, y] of COINS) {
   if (blocked[idx(x, y)]) throw new Error(`coin on blocked tile ${x},${y}`);
@@ -762,6 +773,8 @@ const ENEMIES = [
   ["lamok", 22, 11, 3, 2], ["lamok", 31, 11, 2, 2], ["ipis", 23, 17, 3, 2], ["ipis", 31, 18, 2, 2], ["lamok", 26, 19, 2, 1],
   // blog (5)
   ["lamok", 11, 39, 3, 2], ["ipis", 12, 45, 2, 2], ["lamok", 6, 46, 2, 1], ["ipis", 13, 41, 2, 1], ["lamok", 10, 47, 2, 1],
+  // threads (4)
+  ["lamok", 57, 11, 2, 2], ["ipis", 65, 9, 2, 2], ["lamok", 58, 16, 3, 2], ["ipis", 64, 16, 2, 2],
 ];
 // guard: patrols stay ≥2 tiles from every door and never cover a bridge
 const doorTiles = Object.values(PLACE).map((pl) => [pl.x + pl.door, pl.y + 3]);

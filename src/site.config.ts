@@ -44,7 +44,11 @@ export const platformIds: Record<string, PlatformId> = {
   X: "x",
   Facebook: "facebook",
   Website: "website",
+  Threads: "threads",
 };
+
+/** Platforms that get an island/quick-view card but are kept out of the bottom quick-link bar. */
+export const navExclude: PlatformId[] = ["website", "threads"];
 
 type FallbackLevel = Omit<Level, "iconPath" | "stats">;
 
@@ -125,5 +129,16 @@ export const fallbackLevels: FallbackLevel[] = [
     cta: "READ",
     color: "#16A34A",
     order: 7,
+  },
+  {
+    id: "threads",
+    platform: "Threads",
+    handle: "@pogicodes",
+    url: "https://www.threads.com/@pogicodes",
+    levelName: "World 8: Tambayan",
+    pitch: "Casual dev chats and quick updates",
+    cta: "FOLLOW",
+    color: "#101010",
+    order: 8,
   },
 ];
