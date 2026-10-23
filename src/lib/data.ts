@@ -2,7 +2,8 @@ import { cacheLife } from "next/cache";
 import { fallbackLevels } from "@/site.config";
 import { getRecentRepos } from "./github";
 import { iconPaths } from "./icons";
-import { getTeableLevels, getTeablePosts, getTeableRepos } from "./teable";
+import { getTeableLevels, getTeablePosts, getTeableRepos, getTeableSecret } from "./teable";
+import { site } from "@/site.config";
 import type { HubData, Level } from "./types";
 import { getVideos } from "./youtube";
 
@@ -46,12 +47,13 @@ export async function getHubData(): Promise<HubData> {
   "use cache";
   cacheLife("hours");
 
-  const [levels, videos, repos, posts] = await Promise.all([
+  const [levels, videos, repos, posts, secret] = await Promise.all([
     getLevels(),
     safe("youtube", () => getVideos(5), []),
     getRepos(),
     safe("teable posts", getTeablePosts, null),
+    safe("teable secret", getTeableSecret, null),
   ]);
 
-  return { levels, videos, repos, posts: posts ?? {} };
+  return { levels, videos, repos, posts: posts ?? {}, secret: secret ?? { ...site.secret } };
 }

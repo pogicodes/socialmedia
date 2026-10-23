@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect } from "react";
+import { GameShell } from "./game/GameShell";
 import { Hud } from "./Hud";
 import { Icon } from "./Icon";
 import { LevelCard } from "./LevelCards";
@@ -82,6 +83,7 @@ export function QuickView({ data }: { data: HubData }) {
       </main>
 
       <Hud levels={levels} />
+      <GameShell data={data} />
     </div>
   );
 }

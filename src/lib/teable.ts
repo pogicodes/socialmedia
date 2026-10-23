@@ -1,5 +1,5 @@
 import { platformIds, site } from "@/site.config";
-import type { Level, PlatformId, Post, Repo } from "./types";
+import type { Level, PlatformId, Post, Repo, Secret } from "./types";
 
 const API_URL = process.env.TEABLE_API_URL ?? "https://app.teable.ai";
 
@@ -129,4 +129,14 @@ export async function getTeableRepos(): Promise<Repo[] | null> {
     .sort((a, b) => a.order - b.order || b.repo.stars - a.repo.stars)
     .slice(0, 6)
     .map((x) => x.repo);
+}
+
+/** First active row of `Secret` (hidden-beach reward). */
+export async function getTeableSecret(): Promise<Secret | null> {
+  const records = await fetchRecords(site.teable.secretTableId);
+  const f = records?.find((r) => r.fields["Active"] === true)?.fields;
+  const message = str(f?.["Message"]);
+  const linkUrl = str(f?.["Link URL"]);
+  if (!message || !linkUrl) return null;
+  return { message, linkUrl, linkLabel: str(f?.["Link label"]) ?? "Open" };
 }

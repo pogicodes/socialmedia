@@ -52,9 +52,16 @@ export interface Post {
   published: string | null;
 }
 
+export interface Secret {
+  message: string;
+  linkLabel: string;
+  linkUrl: string;
+}
+
 export interface HubData {
   levels: Level[];
   videos: Video[];
   repos: Repo[];
   posts: Partial<Record<PlatformId, Post[]>>;
+  secret: Secret;
 }

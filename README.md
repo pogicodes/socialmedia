@@ -22,9 +22,23 @@ pnpm dev
 | Level name / pitch / CTA / color / order / visibility / stats | Teable `Socials` | Teable |
 | Latest 3 posts per platform (non-YouTube); first Facebook reel / TikTok video is embedded (loads on tap) | Teable `Posts` (`Publishing status = Published`) | Teable |
 | YouTube videos (Shorts excluded) | YouTube RSS | — |
+| Hidden-beach reward (message + link) | Teable `Secret` (first `Active` row) | Teable |
 | GitHub repos | Teable `Repos` (`Show on site`, sorted by `Order`), filled by your crawler automation. Tokenless GitHub REST "recent repos" fallback if empty or unavailable | Teable |
 
 Everything is fetched server-side in `src/lib/data.ts` (`"use cache"` + `cacheLife("hours")`) and wrapped with fallbacks. A failing source never breaks the page.
+
+## Game (Pogi Island)
+
+- Phaser 4 (Arcade Physics), lazy-loaded client-side in `src/components/game/GameShell.tsx`; scene in `src/game/WorldScene.ts`.
+- Assets live in `public/game/` (committed). Rebuild them from the CC0 "Ninja Adventure" pack (free on itch.io):
+
+  ```bash
+  PACK_DIR="/path/to/Ninja Adventure - Asset Pack" node scripts/build-game-assets.mjs
+  ```
+
+  This crops buildings/trees, draws the custom sprites (jeepney, coconut, lamok, ipis, signs), converts audio to mp3, and writes the island map as Tiled JSON (`public/game/map/island.json`, editable in Tiled).
+- Game state is in `localStorage` (`pogi:save:v1`); healed content per session in `sessionStorage`.
+- `?debug` exposes `window.__pogi` (`bridge`, `store`, `game`) for testing.
 
 ## Env vars (Vercel → Project → Settings → Environment Variables)
 

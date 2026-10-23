@@ -47,7 +47,7 @@ export function IntroDialog({
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 px-3">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[36] px-3">
       <button
         type="button"
         onClick={advance}

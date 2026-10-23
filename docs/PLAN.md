@@ -53,6 +53,14 @@ No GitHub token. Only secret: `TEABLE_API_TOKEN` (read-only).
 Server-rendered, accessible list: Facebook first; follow buttons, latest FB reel, latest YouTube video, posts, repos. It is the base page; the game enhances on top.
 Auto quick view when: reduced motion (with "Play anyway"), no WebGL, very slow device, engine fails. Also what crawlers/link previews see. Manual toggle (remembered).
 
+## Status
+
+- ✅ Step 1 — Quick view (Facebook-first, click-to-load embeds, stats/CTA above the fold).
+- ✅ Step 2 — Walkable island (Phaser 4): joystick + tap-to-walk + keyboard, doors → level cards, lamok/ipis, hearts, coins, ★ CLEARED, heal table, CONTINUE? screen, Follow all, menu, credits, Taglish lines, sound (off by default), auto quick view.
+  - "Watched" = embed open & tab visible for 15s (FB/TikTok don't expose reliable progress without heavy SDKs).
+- ✅ Step 3 — ISLAND COMPLETE (confetti, "Salamat, idol!"), secret bridge to the hidden beach + chest → Teable `Secret` (`tblLdewX1xlberGLnUc`), share score (native share / Facebook / X / copy), OG image rendered from the island.
+- Map v2: custom 16×24 Pogi (jersey + tsinelas), Barangay Hall right in front of spawn, road network (auto-walk prefers roads), Code Dojo on a north islet via bridge.
+
 ## Phasing
 
 1. **Quick view** — ship-able growth hub now (Facebook-first, embeds click-to-load).

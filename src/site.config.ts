@@ -15,9 +15,15 @@ export const site = {
   tagline: "Pick a channel. Tara, follow tayo!",
   introLines: [
     "Uy! A wild POGI appeared!",
-    "POGI wants to show you some code.",
-    "Choose a level ▼",
+    "Welcome to Pogi Island!",
+    "Drag to move · Tap to go ▶",
   ],
+  /** Hidden-beach reward fallback (live value comes from Teable `Secret`). */
+  secret: {
+    message: "Salamat, idol! You found the hidden beach. Here is what I am building next.",
+    linkLabel: "See my projects",
+    linkUrl: "https://github.com/pogicodes",
+  },
   youtubeChannelId: "UCxcrWaR5v29dfMNtnCmp8sQ",
   githubUser: "pogicodes",
   teable: {
@@ -25,6 +31,7 @@ export const site = {
     socialsTableId: "tbl2pOxVFtf9iu05Nhs",
     postsTableId: "tbljNSP6OoJNfgh6GOK",
     reposTableId: "tbl98z25vM4ao3kijj6",
+    secretTableId: "tblLdewX1xlberGLnUc",
   },
 } as const;
 

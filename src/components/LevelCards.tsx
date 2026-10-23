@@ -5,7 +5,15 @@ import Image from "next/image";
 import { useState } from "react";
 import { textOn } from "@/lib/color";
 import { facebookEmbed, tiktokEmbed } from "@/lib/embeds";
-import type { HubData, Level, LevelStats, Post, Repo, Video } from "@/lib/types";
+import type { HubData, Level, LevelStats, PlatformId, Post, Repo, Video } from "@/lib/types";
+import { useEngagement, useWatchTimer } from "./engagement";
+
+/** Reports a "watch" after 15 visible seconds. Key it by content id to reset per item. */
+function WatchTracker({ active, platform, id }: { active: boolean; platform: PlatformId; id: string }) {
+  const eng = useEngagement();
+  useWatchTimer(active, () => eng.watched(platform, id));
+  return null;
+}
 
 const fmt = new Intl.NumberFormat("en", { notation: "compact" });
 const fmtDate = (iso: string) =>
@@ -37,12 +45,16 @@ function Stats({ stats, id }: { stats?: LevelStats; id: Level["id"] }) {
 }
 
 function Cta({ level, href }: { level: Level; href?: string }) {
+  const eng = useEngagement();
   return (
     <a
       href={href ?? level.url}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => track("outbound", { platform: level.id, source: "card_cta" })}
+      onClick={() => {
+        track("outbound", { platform: level.id, source: "card_cta" });
+        eng.clicked(level.id, level.url);
+      }}
       className="pixel-btn font-pixel mb-4 flex w-full items-center justify-center gap-2 py-4 text-sm"
       style={{ backgroundColor: level.color, color: textOn(level.color) }}
     >
@@ -62,6 +74,7 @@ function YouTubeCard({ videos }: { videos: Video[] }) {
     <>
       {video ? (
         <div className="pixel-box relative aspect-video overflow-hidden bg-black">
+          <WatchTracker key={video.id} active={playing} platform="youtube" id={video.id} />
           {playing ? (
             <iframe
               className="absolute inset-0 h-full w-full"
@@ -114,6 +127,7 @@ function YouTubeCard({ videos }: { videos: Video[] }) {
 }
 
 function GitHubCard({ repos }: { repos: Repo[] }) {
+  const eng = useEngagement();
   return (
     <>
       {repos.length > 0 && (
@@ -126,7 +140,10 @@ function GitHubCard({ repos }: { repos: Repo[] }) {
                   href={r.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => track("outbound", { platform: "github", source: "repo" })}
+                  onClick={() => {
+                    track("outbound", { platform: "github", source: "repo" });
+                    eng.clicked("github", r.url);
+                  }}
                   className="pixel-box block bg-white p-3 transition-transform hover:-translate-y-0.5"
                 >
                   <span className="flex items-center justify-between gap-2">
@@ -159,10 +176,21 @@ function GitHubCard({ repos }: { repos: Repo[] }) {
 }
 
 /** Vertical (reel/short) embed that only loads on tap — no third-party scripts until then. */
-function VerticalEmbed({ level, src, title }: { level: Level; src: string; title: string }) {
+export function VerticalEmbed({
+  level,
+  src,
+  title,
+  onPlay,
+}: {
+  level: Pick<Level, "id" | "color">;
+  src: string;
+  title: string;
+  onPlay?: () => void;
+}) {
   const [playing, setPlaying] = useState(false);
   return (
     <div className="pixel-box relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden bg-black">
+      <WatchTracker active={playing} platform={level.id} id={src} />
       {playing ? (
         <iframe
           className="absolute inset-0 h-full w-full"
@@ -176,6 +204,7 @@ function VerticalEmbed({ level, src, title }: { level: Level; src: string; title
           type="button"
           onClick={() => {
             setPlaying(true);
+            onPlay?.();
             track("video_play", { platform: level.id });
           }}
           className="group absolute inset-0 flex flex-col items-center justify-center gap-4 text-white"
@@ -197,13 +226,14 @@ function VerticalEmbed({ level, src, title }: { level: Level; src: string; title
   );
 }
 
-function embedFor(level: Level, url: string) {
+export function embedFor(level: Pick<Level, "id">, url: string) {
   if (level.id === "facebook") return facebookEmbed(url);
   if (level.id === "tiktok") return tiktokEmbed(url);
   return null;
 }
 
 function SocialCard({ level, posts }: { level: Level; posts: Post[] }) {
+  const eng = useEngagement();
   const featured = posts.find((p) => embedFor(level, p.url));
   const featuredSrc = featured ? embedFor(level, featured.url) : null;
   const links = posts.filter((p) => p !== featured);
@@ -229,7 +259,10 @@ function SocialCard({ level, posts }: { level: Level; posts: Post[] }) {
                   href={p.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => track("outbound", { platform: level.id, source: "post" })}
+                  onClick={() => {
+                    track("outbound", { platform: level.id, source: "post" });
+                    eng.clicked(level.id, p.url);
+                  }}
                   className="pixel-box flex items-center justify-between gap-3 bg-white p-3 text-sm text-zinc-900 hover:bg-yellow-50"
                 >
                   <span className="line-clamp-2">{p.title}</span>

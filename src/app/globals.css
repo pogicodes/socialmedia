@@ -162,3 +162,21 @@ body {
 .highlight {
   animation: highlight 2.4s ease-out;
 }
+
+@keyframes confetti {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+.confetti {
+  animation: confetti linear infinite;
+}
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+.pop-in {
+  animation: pop 320ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
