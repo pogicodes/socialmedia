@@ -51,6 +51,8 @@ export const site = {
     linkLabel: "See my projects",
     linkUrl: "https://github.com/pogicodes",
   },
+  /** Source code of this site (public). */
+  repoUrl: "https://github.com/pogicodes/socialmedia",
   youtubeChannelId: "UCxcrWaR5v29dfMNtnCmp8sQ",
   githubUser: "pogicodes",
   teable: {

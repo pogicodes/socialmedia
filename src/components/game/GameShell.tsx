@@ -48,13 +48,16 @@ export function GameShell({ data }: { data: HubData }) {
     setReason(m.reason);
   }, []);
 
+  // stable: Game's boot effect depends on it, and a new function would rebuild the whole game
+  const fail = useCallback(() => setMode("quick"), []);
+
   const choose = (m: Mode) => {
     localStorage.setItem(MODE_KEY, m);
     setMode(m);
     track("mode", { mode: m });
   };
 
-  if (mode === "game") return <Game data={data} onQuickView={() => choose("quick")} onFail={() => setMode("quick")} />;
+  if (mode === "game") return <Game data={data} onQuickView={() => choose("quick")} onFail={fail} />;
   if (mode === "quick")
     return (
       <div className="fixed right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-end gap-2">
@@ -77,7 +80,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const [open, setOpen] = useState<PlatformId | null>(null);
   const [item, setItem] = useState<{ platform: PlatformId; index: number } | null>(null);
   const [dead, setDead] = useState(false);
-  const [modal, setModal] = useState<"follow" | "badges" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
+  const [modal, setModal] = useState<"follow" | "badges" | "about" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
   const [complete, setComplete] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [intro, setIntro] = useState(false);
@@ -257,6 +260,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
               onSound={toggleSound}
               onFollowAll={() => pauseFor("follow")}
               onBadges={() => pauseFor("badges")}
+              onAbout={() => pauseFor("about")}
               onMenu={() => pauseFor("menu")}
             />
 
@@ -345,6 +349,37 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       )}
 
       {modal === "follow" && <FollowAll levels={levels} onClose={() => pauseFor(null)} />}
+      {modal === "about" && (
+        <Modal title="ABOUT POGI ISLAND" onClose={() => pauseFor(null)}>
+          <div className="space-y-3 text-sm leading-relaxed text-zinc-800">
+            <p>
+              Pogi Island is a small game and link hub made by{" "}
+              <a className="underline" href={site.author.url} target="_blank" rel="noopener noreferrer">
+                {site.author.name}
+              </a>{" "}
+              ({site.brand}), a software engineer born in the Philippines, now living and working in Sweden,
+              who makes coding tutorials and dev vlogs.
+            </p>
+            <p>
+              It is open source. Read the code, report a bug, or fork it and build your own island.
+            </p>
+            <a
+              href={site.repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => track("outbound", { platform: "github", source: "about" })}
+              className="pixel-btn font-pixel block bg-zinc-900 py-3 text-center text-[10px] text-white"
+            >
+              VIEW SOURCE ON GITHUB ▶
+            </a>
+            <p className="text-zinc-600">
+              Built with Next.js, React, Phaser and Tailwind. Videos, posts and repos are pulled live from each
+              platform. Your progress is saved only in this browser — no account needed.
+            </p>
+            <p className="text-zinc-600">Art &amp; audio credits are in Menu → Credits.</p>
+          </div>
+        </Modal>
+      )}
       {modal === "badges" && (
         <Modal title="BADGES" onClose={() => pauseFor(null)}>
           <Badges levels={levels} />
@@ -353,9 +388,6 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       {modal === "menu" && (
         <Modal title="MENU" onClose={() => pauseFor(null)}>
           <div className="grid gap-2">
-            <button type="button" className="pixel-btn font-pixel bg-white py-3 text-[10px]" onClick={() => pauseFor("follow")}>
-              👥 FOLLOW ALL
-            </button>
             <button type="button" className="pixel-btn font-pixel bg-white py-3 text-[10px]" onClick={() => pauseFor("share")}>
               📣 SHARE MY SCORE
             </button>

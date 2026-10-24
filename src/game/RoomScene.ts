@@ -147,6 +147,11 @@ export class RoomScene extends Phaser.Scene {
       bridge.on("healed", (n) => this.floatText(`Ayos! +${n} ❤`, "#ff5c8a")),
       bridge.on("cleared", (id) => id === p && this.floatText("★ CLEARED!", "#ffe14d")),
     );
+    // game.destroy() skips "shutdown", so drop bridge listeners on "destroy" too
+    this.events.once("destroy", () => {
+      this.unsubs.forEach((u) => u());
+      this.unsubs = [];
+    });
     this.events.once("shutdown", () => {
       this.unsubs.forEach((u) => u());
       this.unsubs = [];

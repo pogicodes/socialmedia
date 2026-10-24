@@ -58,6 +58,7 @@ export function GameHud({
   onSound,
   onFollowAll,
   onBadges,
+  onAbout,
   onMenu,
 }: {
   levels: Level[];
@@ -65,6 +66,7 @@ export function GameHud({
   onSound: () => void;
   onFollowAll: () => void;
   onBadges: () => void;
+  onAbout: () => void;
   onMenu: () => void;
 }) {
   const s = useGame();
@@ -82,7 +84,12 @@ export function GameHud({
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex items-start justify-between gap-2 p-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-col gap-1.5">
-        <div className="pixel-box pointer-events-auto flex items-center gap-1.5 self-start bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white">
+        <button
+          type="button"
+          onClick={onAbout}
+          aria-label="About Pogi Island"
+          className="pixel-box pointer-events-auto flex items-center gap-1.5 self-start bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white"
+        >
           {/* Pogi's face: top of the first (facing-down) frame of his sprite sheet, at 2x */}
           <span
             aria-hidden
@@ -107,7 +114,7 @@ export function GameHud({
             />
             {s.coins}
           </span>
-        </div>
+        </button>
         <Stickers levels={levels} cleared={s.cleared} onOpen={onBadges} />
       </div>
       <div className="pointer-events-auto flex shrink-0 gap-1">

@@ -283,6 +283,11 @@ export class WorldScene extends Phaser.Scene {
       bridge.on("complete", () => this.unlock(true)),
       bridge.on("gotoSecret", () => (this.sys.isSleeping() ? (this.chestAfterWake = true) : this.walkToChest())),
     );
+    // game.destroy() skips "shutdown", so drop bridge listeners on "destroy" too
+    this.events.once("destroy", () => {
+      this.unsubs.forEach((u) => u());
+      this.unsubs = [];
+    });
     this.events.once("shutdown", () => {
       this.unsubs.forEach((u) => u());
       this.unsubs = [];
