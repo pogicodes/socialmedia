@@ -603,7 +603,7 @@ export class WorldScene extends Phaser.Scene {
     this.invincibleUntil = this.time.now + 900;
     const left = damage();
     this.sfx("hit");
-    this.cameras.main.shake(120, 0.006);
+    this.hitFx(from);
     this.floatText("", "#ff5c5c", "Aray!");
     this.player.setTint(0xff4444).setTintMode(Phaser.TintModes.FILL);
     this.time.delayedCall(90, () => this.player.clearTint());
@@ -622,6 +622,29 @@ export class WorldScene extends Phaser.Scene {
       this.setPaused(true);
       this.player.setFrame(DIR_COL.down);
       bridge.emit("dead");
+    }
+  }
+
+  /** Hit feedback on Pogi, not the whole screen: squash-and-jolt plus a spark burst where it landed. */
+  private hitFx(from: Phaser.GameObjects.Sprite) {
+    this.tweens.add({ targets: this.player, scaleX: 1.18, scaleY: 0.86, duration: 60, yoyo: true, ease: "Quad.out" });
+    const x = (from.x + this.player.x) / 2;
+    const y = (from.y + this.player.y + FEET) / 2 - 4;
+    const flash = this.add.circle(x, y, 5, 0xffffff, 0.9).setDepth(10_000);
+    this.tweens.add({ targets: flash, scale: 2.2, alpha: 0, duration: 180, ease: "Cubic.out", onComplete: () => flash.destroy() });
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2 + Math.random() * 0.4;
+      const r = 9 + Math.random() * 5;
+      const spark = this.add.rectangle(x, y, 2, 2, i % 2 ? 0xffe14d : 0xff5c5c).setDepth(10_000);
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(a) * r,
+        y: y + Math.sin(a) * r,
+        alpha: 0,
+        duration: 260,
+        ease: "Cubic.out",
+        onComplete: () => spark.destroy(),
+      });
     }
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MAX_HEARTS, store, BASE_HEARTS } from "@/game/state";
 
 const useGame = () => useSyncExternalStore(store.subscribe, store.get, store.get);
@@ -34,6 +34,13 @@ export function GameHud({
   onMenu: () => void;
 }) {
   const s = useGame();
+  // shake the hearts (not the screen) when one is lost
+  const [hit, setHit] = useState(0);
+  const prevHearts = useRef(s.hearts);
+  useEffect(() => {
+    if (s.hearts < prevHearts.current) setHit((n) => n + 1);
+    prevHearts.current = s.hearts;
+  }, [s.hearts]);
   const hearts = Array.from({ length: Math.max(BASE_HEARTS, s.hearts) }, (_, i) =>
     i >= BASE_HEARTS ? "gold" : i < s.hearts ? "full" : "empty",
   ) as ("full" | "empty" | "gold")[];
@@ -41,7 +48,11 @@ export function GameHud({
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex items-start justify-between gap-2 p-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
       <div className="pixel-box pointer-events-auto flex items-center gap-1.5 bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white">
-        <span className="flex items-center" aria-label={`${s.hearts} of ${MAX_HEARTS} hearts`}>
+        <span
+          key={hit}
+          className={`flex items-center ${hit ? "hurt-shake" : ""}`}
+          aria-label={`${s.hearts} of ${MAX_HEARTS} hearts`}
+        >
           {hearts.map((h, i) => (
             <Heart key={i} state={h} />
           ))}
