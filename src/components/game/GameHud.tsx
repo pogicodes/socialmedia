@@ -82,7 +82,14 @@ export function GameHud({
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex items-start justify-between gap-2 p-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-col gap-1.5">
-        <div className="pixel-box pointer-events-auto flex items-center gap-1.5 bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white">
+        <div className="pixel-box pointer-events-auto flex items-center gap-1.5 self-start bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white">
+          {/* Pogi's face: top of the first (facing-down) frame of his sprite sheet, at 2x */}
+          <span
+            aria-hidden
+            className="inline-block h-7 w-8 shrink-0 border-2 border-black bg-[#5ec8ff] [image-rendering:pixelated]"
+            style={{ backgroundImage: "url(/game/sprites/pogi.png)", backgroundSize: "128px 192px", backgroundPosition: "-2px -1px" }}
+          />
+          <span className="font-pixel text-[10px] text-yellow-300">POGI</span>
           <span
             key={hit}
             className={`flex items-center ${hit ? "hurt-shake" : ""}`}
@@ -99,9 +106,6 @@ export function GameHud({
               style={{ backgroundImage: "url(/game/sprites/coin.png)", backgroundSize: "64px 16px" }}
             />
             {s.coins}
-          </span>
-          <span className="font-pixel text-[10px] text-yellow-300" aria-label={`${s.cleared.length} of ${levels.length} cleared`}>
-            {s.cleared.length}/{levels.length}
           </span>
         </div>
         <Stickers levels={levels} cleared={s.cleared} onOpen={onBadges} />
