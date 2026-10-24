@@ -1,16 +1,31 @@
 import * as Phaser from "phaser";
 import type { PlatformId } from "@/lib/types";
 import { bridge } from "./bridge";
+import { GuideArrow, type GuideTarget } from "./guide";
 import { findPath } from "./pathfind";
+import type { RoomData } from "./RoomScene";
 import { BASE_HEARTS, damage, store } from "./state";
 
-const T = 16;
-const SPEED = 72;
+export const T = 16;
+export const SPEED = 72;
 /** Pogi is 16×24; his feet sit 9px below the sprite centre. */
-const FEET = 9;
+export const FEET = 9;
 const BASE = "/game";
-type Dir = "down" | "up" | "left" | "right";
-const DIR_COL: Record<Dir, number> = { down: 0, up: 1, left: 2, right: 3 };
+export type Dir = "down" | "up" | "left" | "right";
+export const DIR_COL: Record<Dir, number> = { down: 0, up: 1, left: 2, right: 3 };
+
+/** Integer zoom (crisp pixels): ~8 tiles across a phone, ~13 tiles tall on wide screens. */
+export function zoomFor(width: number, height: number) {
+  return Phaser.Math.Clamp(Math.round(Math.min(width / (T * 8), height / (T * 13))), 2, 6);
+}
+
+/** Writes the top of Pogi's head in screen px to the bridge (the action hint follows it). */
+export function reportAnchor(scene: Phaser.Scene, player: Phaser.GameObjects.Sprite) {
+  const cam = scene.cameras.main;
+  const v = cam.worldView;
+  bridge.anchor.x = (player.x - v.x) * cam.zoom;
+  bridge.anchor.y = (player.y - 12 - v.y) * cam.zoom;
+}
 
 /** After everything is done: what a dev + content creator does all day. */
 const CREATOR_LINES = [
@@ -83,6 +98,10 @@ export class WorldScene extends Phaser.Scene {
   private chest?: Phaser.GameObjects.Sprite;
   private chestZone?: Phaser.Geom.Rectangle;
   private inChest = false;
+  private prompt: string | null = null;
+  private arrow!: GuideArrow;
+  /** "Hidden beach" was picked while inside a room: walk there once back outside. */
+  private chestAfterWake = false;
 
   constructor() {
     super("world");
@@ -105,7 +124,7 @@ export class WorldScene extends Phaser.Scene {
     }
     for (const k of ["jeepney", "coconut", "tree", "bush-tree", "bamboo", "rock", "boulder", "dojo-sign"])
       this.load.image(k, `${BASE}/sprites/${k}.png`);
-    for (const a of ["music", "coin", "hit", "heal", "open", "clear", "gameover", "step", "complete"])
+    for (const a of ["music", "coin", "hit", "heal", "open", "close", "clear", "gameover", "step", "complete"])
       this.load.audio(a, `${BASE}/audio/${a}.mp3`);
   }
 
@@ -239,7 +258,9 @@ export class WorldScene extends Phaser.Scene {
     cam.startFollow(this.player, true, 0.12, 0.12);
     cam.setBackgroundColor("#5ec8ff");
     this.fitZoom();
-    this.scale.on("resize", () => this.fitZoom());
+    this.scale.on("resize", this.fitZoom, this);
+    this.arrow = new GuideArrow(this);
+    this.events.on("wake", (_: unknown, data: { platform: PlatformId }) => this.exitRoom(data.platform));
 
     // ---------------------------------------------------------- input
     const kb = this.input.keyboard!;
@@ -256,15 +277,17 @@ export class WorldScene extends Phaser.Scene {
       bridge.on("revive", () => this.revive()),
       bridge.on("newgame", () => this.scene.restart()),
       bridge.on("sound", (on) => this.setSound(on)),
-      bridge.on("goto", (id) => this.goto(id)),
+      bridge.on("enterRoom", (id) => this.goto(id)),
       bridge.on("healed", (n) => this.floatText(`+${n} ❤`, "#ff5c8a", "Ayos!")),
       bridge.on("cleared", (id) => this.stamp(id, true)),
       bridge.on("complete", () => this.unlock(true)),
-      bridge.on("gotoSecret", () => this.walkToChest()),
+      bridge.on("gotoSecret", () => (this.sys.isSleeping() ? (this.chestAfterWake = true) : this.walkToChest())),
     );
     this.events.once("shutdown", () => {
       this.unsubs.forEach((u) => u());
       this.unsubs = [];
+      this.scale.off("resize", this.fitZoom, this);
+      this.scene.stop("room");
       this.doors = [];
       this.enemies = [];
       this.stamps.clear();
@@ -278,6 +301,8 @@ export class WorldScene extends Phaser.Scene {
       this.chest = undefined;
       this.chestZone = undefined;
       this.inChest = false;
+      this.prompt = null;
+      this.chestAfterWake = false;
       this.paused = false;
       this.spoke = false;
     });
@@ -288,10 +313,8 @@ export class WorldScene extends Phaser.Scene {
   // ============================================================ helpers
 
   private fitZoom() {
-    const { width, height } = this.scale;
-    // ~11 tiles across on phones, more on desktop; integer zoom keeps pixels crisp
-    const z = Math.max(2, Math.min(5, Math.round(Math.min(width / (T * 11), height / (T * 15)))));
-    this.cameras.main.setZoom(z);
+    if (this.sys.isSleeping()) return; // the room scene owns the screen; re-fit on wake
+    this.cameras.main.setZoom(zoomFor(this.scale.width, this.scale.height));
   }
 
   private isBlocked = (tx: number, ty: number) => {
@@ -423,18 +446,37 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** Where Pogi should head next: first uncleared building in channel order, then the hidden-beach chest. */
+  private goal(): (GuideTarget & { door?: Door }) | null {
+    const s = store.get();
+    const next = bridge.meta.order.find((id) => !s.cleared.includes(id) && this.doors.some((d) => d.platform === id));
+    if (next) {
+      const d = this.doors.find((dd) => dd.platform === next)!;
+      return {
+        x: d.tx * T + 8,
+        y: d.ty * T - 12,
+        ground: { x: d.tx * T + 8, y: d.ty * T + 10 },
+        icon: { key: `sign-${d.platform}` },
+        door: d,
+      };
+    }
+    if (this.unlocked && !s.secretSeen && this.chest)
+      return {
+        x: this.chest.x,
+        y: this.chest.y - 8,
+        ground: { x: this.chest.x, y: this.chest.y + 6 },
+        icon: { key: "chest", frame: 0, scale: 1.5 },
+      };
+    return null;
+  }
+
   /** Priority: what the player should do next. Creator flavor only once everything is done. */
   private idleLine(): string {
     const s = store.get();
-    const { names, order } = bridge.meta;
     if (s.hearts <= 1) return "Konti na lang heart ko! Nood tayo ng video para gumaling.";
-    const next = order.find((id) => !s.cleared.includes(id) && this.doors.some((d) => d.platform === id));
-    if (next) {
-      const d = this.doors.find((dd) => dd.platform === next)!;
-      const name = names[next] ?? next;
-      return `Tara sa ${name}! ${this.arrowTo(d.tx * T + 8, d.ty * T + 8)}`;
-    }
-    if (this.unlocked && !s.secretSeen && this.chest) return `May tulay na papuntang hidden beach! ${this.arrowTo(this.chest.x, this.chest.y)}`;
+    const g = this.goal();
+    if (g?.door) return `Tara sa ${bridge.meta.names[g.door.platform] ?? g.door.platform}! ${this.arrowTo(g.x, g.y)}`;
+    if (g) return `May tulay na papuntang hidden beach! ${this.arrowTo(g.x, g.y)}`;
     return Phaser.Utils.Array.GetRandom(CREATOR_LINES);
   }
 
@@ -447,24 +489,56 @@ export class WorldScene extends Phaser.Scene {
   // ============================================================ actions
 
   private interact() {
-    if (this.paused) return;
+    if (this.paused || !this.sys.isActive()) return;
     if (this.inChest) return this.openChest();
-    if (this.currentDoor) {
-      this.sfx("open");
-      bridge.emit("enter", this.currentDoor);
+    if (this.currentDoor) this.enterRoom(this.currentDoor);
+  }
+
+  /** Deep link: stand at the door, go in and open the notice board. */
+  private goto(id: PlatformId) {
+    const door = this.doors.find((d) => d.platform === id);
+    if (!door || !this.sys.isActive()) return;
+    this.player.setPosition(door.tx * T + 8, door.ty * T + 8 - FEET);
+    this.enterRoom(id, true);
+  }
+
+  private enterRoom(id: PlatformId, openBoard = false) {
+    this.path = [];
+    this.pathTarget = null;
+    this.player.setVelocity(0, 0);
+    this.player.anims.stop();
+    this.dir = "up";
+    this.player.setFrame(DIR_COL.up);
+    this.sfx("open");
+    this.currentDoor = null;
+    this.prompt = null;
+    bridge.emit("prompt", null);
+    store.set({ pos: { x: Math.round(this.player.x), y: Math.round(this.player.y) } });
+    const data: RoomData = { platform: id, sfx: (k, v) => this.sfx(k, v), openBoard };
+    this.scene.launch("room", data);
+    this.scene.sleep();
+  }
+
+  /** Back outside: one tile below the door, facing out. */
+  private exitRoom(id: PlatformId) {
+    const door = this.doors.find((d) => d.platform === id);
+    if (door) {
+      const ty = this.isBlocked(door.tx, door.ty + 1) ? door.ty : door.ty + 1;
+      this.player.setPosition(door.tx * T + 8, ty * T + 8 - FEET);
+    }
+    this.dir = "down";
+    this.player.setFrame(DIR_COL.down);
+    this.lastMove = this.time.now;
+    this.fitZoom();
+    this.cameras.main.fadeIn(220, 0, 0, 0);
+    if (this.chestAfterWake) {
+      this.chestAfterWake = false;
+      this.walkToChest();
     }
   }
 
-  private goto(id: PlatformId) {
-    const door = this.doors.find((d) => d.platform === id);
-    if (!door) return;
-    this.player.setPosition(door.tx * T + 8, door.ty * T + 8 - FEET);
-    this.dir = "up";
-    this.player.setFrame(DIR_COL.up);
-  }
-
   private tapTo(sx: number, sy: number) {
-    if (this.paused) return;
+    if (this.paused || !this.sys.isActive()) return;
     const wp = this.cameras.main.getWorldPoint(sx, sy);
     let target = this.tileOf(wp.x, wp.y);
     this.pathTarget = null;
@@ -509,12 +583,7 @@ export class WorldScene extends Phaser.Scene {
       this.dir = "right";
       this.player.setFrame(DIR_COL.right);
       this.openChest();
-    } else if (id) {
-      this.dir = "up";
-      this.player.setFrame(DIR_COL.up);
-      this.sfx("open");
-      bridge.emit("enter", id);
-    }
+    } else if (id) this.enterRoom(id);
   }
 
   private collectCoin(c: Phaser.Physics.Arcade.Sprite) {
@@ -580,6 +649,10 @@ export class WorldScene extends Phaser.Scene {
   // ============================================================ loop
 
   update(time: number, delta: number) {
+    reportAnchor(this, this.player);
+    const g = this.paused ? null : this.goal();
+    // hide once Pogi is at the right door (the action hint takes over)
+    this.arrow.update(g?.door && g.door.platform === this.currentDoor ? null : g, time);
     if (this.paused) return;
     this.updateEnemies(delta);
     if (time < this.knockUntil) return;
@@ -647,7 +720,8 @@ export class WorldScene extends Phaser.Scene {
     } else {
       this.player.anims.stop();
       this.player.setFrame(DIR_COL[this.dir]);
-      if (time - this.lastMove > (this.spoke ? 7000 : 2500)) {
+      // the action hint owns the space above Pogi's head
+      if (!this.prompt && time - this.lastMove > (this.spoke ? 7000 : 2500)) {
         this.lastMove = time;
         this.spoke = true;
         this.say(this.idleLine(), 3200);
@@ -658,15 +732,17 @@ export class WorldScene extends Phaser.Scene {
 
     // door detection
     const f = this.feet();
-    const door = this.doors.find((d) => Phaser.Geom.Rectangle.Contains(d.zone, f.x, f.y))?.platform ?? null;
-    if (door !== this.currentDoor) {
-      this.currentDoor = door;
-      bridge.emit("door", door);
-    }
-    const inChest = !!(this.unlocked && this.chestZone && Phaser.Geom.Rectangle.Contains(this.chestZone, f.x, f.y));
-    if (inChest !== this.inChest) {
-      this.inChest = inChest;
-      bridge.emit("chest", inChest);
+    this.currentDoor = this.doors.find((d) => Phaser.Geom.Rectangle.Contains(d.zone, f.x, f.y))?.platform ?? null;
+    this.inChest = !!(this.unlocked && this.chestZone && Phaser.Geom.Rectangle.Contains(this.chestZone, f.x, f.y));
+    const prompt = this.inChest
+      ? "OPEN CHEST"
+      : this.currentDoor
+        ? `ENTER ${(bridge.meta.names[this.currentDoor] ?? this.currentDoor).toUpperCase()}`
+        : null;
+    if (prompt !== this.prompt) {
+      this.prompt = prompt;
+      if (prompt) this.bubble?.destroy();
+      bridge.emit("prompt", prompt);
     }
 
     // autosave position

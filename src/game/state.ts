@@ -11,6 +11,8 @@ export interface GameState {
   /** indices of collected map coins */
   collected: number[];
   pos: { x: number; y: number } | null;
+  /** opened room treasures, `${platform}:${index}` (index -1 = notice board) */
+  opened: string[];
   introSeen: boolean;
   completeSeen: boolean;
   secretSeen: boolean;
@@ -25,6 +27,7 @@ const fresh = (): GameState => ({
   cleared: [],
   collected: [],
   pos: null,
+  opened: [],
   introSeen: false,
   completeSeen: false,
   secretSeen: false,

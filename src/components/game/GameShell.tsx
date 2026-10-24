@@ -4,14 +4,15 @@ import { track } from "@vercel/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EngagementProvider, type EngagementApi } from "../engagement";
 import { IntroDialog } from "../IntroDialog";
-import { LevelCard } from "../LevelCards";
+import { LevelCard, Treasure, treasureTitles } from "../LevelCards";
 import { LevelSheet } from "../LevelSheet";
+import { ActionHint } from "./ActionHint";
 import { ContinueScreen } from "./ContinueScreen";
 import { IslandComplete, ShareButtons } from "./IslandComplete";
 import { GameHud } from "./GameHud";
 import { Joystick } from "./Joystick";
 import { FollowAll, Modal } from "./Modals";
-import { bridge } from "@/game/bridge";
+import { bridge, MAX_TREASURES } from "@/game/bridge";
 import { engage, store } from "@/game/state";
 import type { HubData, PlatformId } from "@/lib/types";
 import { site } from "@/site.config";
@@ -71,11 +72,11 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const host = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [ready, setReady] = useState(false);
-  const [door, setDoor] = useState<PlatformId | null>(null);
+  const [prompt, setPrompt] = useState<string | null>(null);
   const [open, setOpen] = useState<PlatformId | null>(null);
+  const [item, setItem] = useState<{ platform: PlatformId; index: number } | null>(null);
   const [dead, setDead] = useState(false);
   const [modal, setModal] = useState<"follow" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
-  const [chest, setChest] = useState(false);
   const [complete, setComplete] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
   const [intro, setIntro] = useState(false);
@@ -84,6 +85,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
 
   const { levels } = data;
   const level = open ? levels.find((l) => l.id === open) : null;
+  const itemLevel = item ? levels.find((l) => l.id === item.platform) : null;
 
   // boot Phaser (client-only, lazy)
   useEffect(() => {
@@ -92,21 +94,25 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
     const offs = [
       bridge.on("progress", (v) => setProgress(v)),
       bridge.on("ready", () => setReady(true)),
-      bridge.on("door", (d) => setDoor(d)),
-      bridge.on("chest", (c) => setChest(c)),
+      bridge.on("prompt", (p) => setPrompt(p)),
       bridge.on("secret", () => {
         store.set({ secretSeen: true });
         setModal("secret");
         bridge.emit("pause", true);
         track("secret_open");
       }),
-      bridge.on("enter", (id) => {
-        setOpen(id);
-        bridge.emit("pause", true);
+      bridge.on("room", (id) => {
         const url = new URL(location.href);
-        url.searchParams.set("level", id);
+        if (id) url.searchParams.set("level", id);
+        else url.searchParams.delete("level");
         history.replaceState(null, "", url);
-        track("level_open", { level: id, source: "game" });
+        if (id) track("level_open", { level: id, source: "game" });
+      }),
+      bridge.on("item", ({ platform, index }) => {
+        if (index < 0) setOpen(platform);
+        else setItem({ platform, index });
+        bridge.emit("pause", true);
+        track("item_open", { level: platform, index });
       }),
       bridge.on("dead", () => {
         deadRef.current = true;
@@ -116,6 +122,8 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
     ];
     bridge.meta.names = Object.fromEntries(levels.map((l) => [l.id, shortName(l.levelName)]));
     bridge.meta.order = levels.map((l) => l.id);
+    bridge.meta.colors = Object.fromEntries(levels.map((l) => [l.id, l.color]));
+    bridge.meta.rooms = Object.fromEntries(levels.map((l) => [l.id, treasureTitles(l, data).slice(0, MAX_TREASURES)]));
     if (new URLSearchParams(location.search).has("debug"))
       (window as unknown as { __pogi: unknown }).__pogi = { bridge, store };
     import("@/game/createGame")
@@ -135,7 +143,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       game?.destroy(true);
       document.body.style.overflow = prev;
     };
-  }, [onFail, levels]);
+  }, [onFail, levels, data]);
 
   // after ready: sound pref, deep link, intro
   useEffect(() => {
@@ -145,10 +153,8 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
     setSoundOn(on);
     bridge.emit("sound", on);
     const id = new URLSearchParams(location.search).get("level") as PlatformId | null;
-    if (id && levels.some((l) => l.id === id)) {
-      bridge.emit("goto", id);
-      bridge.emit("enter", id);
-    } else if (!store.get().introSeen) setIntro(true);
+    if (id && levels.some((l) => l.id === id)) bridge.emit("enterRoom", id);
+    else if (!store.get().introSeen) setIntro(true);
   }, [ready, levels]);
 
   // ISLAND COMPLETE: all buildings cleared (once)
@@ -183,9 +189,11 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const closeLevel = useCallback(() => {
     setOpen(null);
     bridge.emit("pause", false);
-    const url = new URL(location.href);
-    url.searchParams.delete("level");
-    history.replaceState(null, "", url);
+  }, []);
+
+  const closeItem = useCallback(() => {
+    setItem(null);
+    bridge.emit("pause", false);
   }, []);
 
   const revive = useCallback(() => {
@@ -219,7 +227,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
 
   const pauseFor = (m: typeof modal) => {
     setModal(m);
-    bridge.emit("pause", !!m || !!open || dead);
+    bridge.emit("pause", !!m || !!open || !!item || dead);
   };
 
   return (
@@ -250,29 +258,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
               onMenu={() => pauseFor("menu")}
             />
 
-            {chest && !modal && !dead && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[35] flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => bridge.emit("interact")}
-                  className="pixel-btn font-pixel pointer-events-auto animate-bounce bg-yellow-300 px-4 py-3 text-[10px] text-black"
-                >
-                  ▶ OPEN CHEST?
-                </button>
-              </div>
-            )}
-
-            {door && !open && !dead && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[35] flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => bridge.emit("interact")}
-                  className="pixel-btn font-pixel pointer-events-auto animate-bounce bg-yellow-300 px-4 py-3 text-[10px] text-black"
-                >
-                  ▶ ENTER {shortName(levels.find((l) => l.id === door)?.levelName ?? door).toUpperCase()}?
-                </button>
-              </div>
-            )}
+            {prompt && !modal && !dead && !open && !item && <ActionHint label={prompt} />}
 
             {intro && (
               <IntroDialog
@@ -299,6 +285,15 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
         <LevelSheet level={level} onClose={closeLevel}>
           <LevelCard level={level} data={data} />
         </LevelSheet>
+      )}
+
+      {item && itemLevel && (
+        <Modal
+          title={`🎁 TREASURE ${item.index + 1}/${bridge.meta.rooms[item.platform]?.length ?? 1}`}
+          onClose={closeItem}
+        >
+          <Treasure level={itemLevel} data={data} index={item.index} />
+        </Modal>
       )}
 
       {dead && <ContinueScreen data={data} onGiveUp={giveUp} />}
@@ -384,8 +379,9 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
                 store.reset();
                 bridge.emit("newgame");
                 setComplete(false);
-                setChest(false);
-                setDoor(null);
+                setPrompt(null);
+                setOpen(null);
+                setItem(null);
                 pauseFor(null);
                 track("reset_progress");
               }}

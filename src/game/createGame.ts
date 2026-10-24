@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { RoomScene } from "./RoomScene";
 import { WorldScene } from "./WorldScene";
 
 /** Client-only entry; imported dynamically so Phaser never ships in the initial bundle. */
@@ -13,6 +14,6 @@ export function createGame(parent: HTMLElement) {
     physics: { default: "arcade", arcade: { debug: false } },
     input: { keyboard: true, mouse: false, touch: false },
     audio: { disableWebAudio: false },
-    scene: [WorldScene],
+    scene: [WorldScene, RoomScene],
   });
 }

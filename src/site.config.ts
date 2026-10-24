@@ -2,7 +2,8 @@ import type { Level, PlatformId } from "@/lib/types";
 
 /**
  * Hardcoded identity + fallbacks. Edit here; it rarely changes.
- * Live level config comes from Teable `Socials` and overrides `fallbackLevels`.
+ * Live level config comes from Teable `Socials` and overrides `fallbackLevels`
+ * (except `levelName`: place names are owned here).
  */
 export const site = {
   brand: "PogiCodes",
@@ -84,7 +85,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "Facebook",
     handle: "@pogicodes",
     url: "https://www.facebook.com/pogicodes",
-    levelName: "World 1: Barangay Hall",
+    levelName: "World 1: Facebook Hall",
     pitch: "Main hangout — reels, updates, and the community",
     cta: "FOLLOW",
     color: "#1877F2",
@@ -95,7 +96,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "YouTube",
     handle: "@pogicodes",
     url: "https://www.youtube.com/@pogicodes",
-    levelName: "World 2: Sinehan",
+    levelName: "World 2: YouTube Cinema",
     pitch: "Coding tutorials and dev vlogs",
     cta: "SUBSCRIBE",
     color: "#FF0033",
@@ -106,7 +107,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "TikTok",
     handle: "@pogicodes",
     url: "https://www.tiktok.com/@pogicodes",
-    levelName: "World 3: Videoke Stage",
+    levelName: "World 3: TikTok Stage",
     pitch: "Quick coding tips in under a minute",
     cta: "FOLLOW",
     color: "#25F4EE",
@@ -117,7 +118,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "Instagram",
     handle: "@pogicodes",
     url: "https://www.instagram.com/pogicodes/",
-    levelName: "World 4: Photo Booth",
+    levelName: "World 4: Instagram Studio",
     pitch: "Behind the scenes and dev life",
     cta: "FOLLOW",
     color: "#E1306C",
@@ -128,7 +129,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "X",
     handle: "@pogicodes",
     url: "https://x.com/pogicodes",
-    levelName: "World 5: Chismis Corner",
+    levelName: "World 5: X Corner",
     pitch: "Hot takes and coding threads",
     cta: "FOLLOW",
     color: "#1D9BF0",
@@ -139,7 +140,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "GitHub",
     handle: "@pogicodes",
     url: "https://github.com/pogicodes",
-    levelName: "World 6: Code Dojo",
+    levelName: "World 6: GitHub Dojo",
     pitch: "Open source projects and experiments",
     cta: "FOLLOW",
     color: "#8B5CF6",
@@ -150,7 +151,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "Website",
     handle: "carlogino.com",
     url: "https://carlogino.com/blog",
-    levelName: "World 7: Aklatan",
+    levelName: "World 7: Blog Library",
     pitch: "Long-form tutorials and dev write-ups",
     cta: "READ",
     color: "#16A34A",
@@ -161,7 +162,7 @@ export const fallbackLevels: FallbackLevel[] = [
     platform: "Threads",
     handle: "@pogicodes",
     url: "https://www.threads.com/@pogicodes",
-    levelName: "World 8: Tambayan",
+    levelName: "World 8: Threads Lounge",
     pitch: "Casual dev chats and quick updates",
     cta: "FOLLOW",
     color: "#101010",

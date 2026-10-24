@@ -62,7 +62,6 @@ export async function getTeableLevels(): Promise<
         platform: str(f["Platform"]),
         handle: str(f["Handle"]),
         url: str(f["Profile URL"]),
-        levelName: str(f["Level name"]),
         pitch: str(f["Pitch"]),
         cta: str(f["CTA label"]),
         color: str(f["Color"]),
