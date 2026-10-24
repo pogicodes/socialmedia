@@ -60,12 +60,18 @@ export function GameShell({ data }: { data: HubData }) {
   if (mode === "game") return <Game data={data} onQuickView={() => choose("quick")} onFail={fail} />;
   if (mode === "quick")
     return (
-      <div className="fixed right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-end gap-2">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2.5rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-center gap-2 px-4 *:pointer-events-auto">
         {reason === "reduced" && (
           <p className="pixel-box max-w-[14rem] bg-white px-2 py-1 text-xs text-zinc-700">Reduced motion is on, so we opened quick view.</p>
         )}
-        <button type="button" onClick={() => choose("game")} className="pixel-btn font-pixel bg-yellow-300 px-3 py-3 text-[10px] text-black">
-          🎮 PLAY POGI ISLAND
+        <button
+          type="button"
+          onClick={() => choose("game")}
+          className="pixel-btn play-cta font-pixel flex items-center gap-2 border-4 bg-yellow-300 px-5 py-4 text-xs text-black hover:bg-yellow-200 sm:text-sm"
+        >
+          <span aria-hidden className="text-lg sm:text-xl">🎮</span>
+          PLAY POGI ISLAND
+          <span aria-hidden className="blink">▶</span>
         </button>
       </div>
     );

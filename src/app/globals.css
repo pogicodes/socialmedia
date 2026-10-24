@@ -216,6 +216,37 @@ body {
     transform: scale(1.1);
   }
 }
+/* quick view: the PLAY button bobs and glows so it reads as the main action */
+@keyframes play-cta {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow:
+      0 5px 0 #000,
+      0 0 0 0 rgb(255 225 77 / 0.7);
+  }
+  50% {
+    transform: translateY(-4px);
+    box-shadow:
+      0 9px 0 #000,
+      0 0 0 10px rgb(255 225 77 / 0);
+  }
+}
+.play-cta {
+  animation: play-cta 1.4s ease-in-out infinite;
+}
+.play-cta:hover,
+.play-cta:active {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .play-cta {
+    animation: none;
+    box-shadow:
+      0 5px 0 #000,
+      0 0 0 4px #ffe14d;
+  }
+}
 .heartbeat {
   animation: heartbeat 0.9s ease-out infinite;
 }
@@ -227,11 +258,13 @@ body {
 .low-hp-face {
   animation: low-hp-face 0.6s steps(1) infinite;
 }
+/* ring is listed first so the black drop shadow doesn't cover its bottom-right edges */
 @keyframes low-hp {
   50% {
+    border-color: #ff4d4d;
     box-shadow:
-      4px 4px 0 #000,
-      0 0 0 3px #ff4d4d;
+      0 0 0 3px #ff4d4d,
+      4px 4px 0 3px #000;
   }
 }
 .low-hp {
@@ -240,8 +273,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   /* animations are off, so keep a steady red ring as the warning */
   .low-hp {
+    border-color: #ff4d4d;
     box-shadow:
-      4px 4px 0 #000,
-      0 0 0 3px #ff4d4d;
+      0 0 0 3px #ff4d4d,
+      4px 4px 0 3px #000;
   }
 }
