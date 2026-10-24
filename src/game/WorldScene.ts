@@ -90,6 +90,13 @@ export class WorldScene extends Phaser.Scene {
   private unsubs: (() => void)[] = [];
   private saveTimer = 0;
   private spoke = false;
+  /** Last-heart heal tips: when the next one is due, which one, and whether walking may hide it. */
+  private healTipAt = 0;
+  private healTipIdx = 0;
+  private bubbleSticky = false;
+  /** Fainting: the stars over Pogi's head and where he stood before keeling over. */
+  private dizzy: Phaser.GameObjects.Text[] = [];
+  private faintY = 0;
   private roads!: Phaser.Tilemaps.TilemapLayer;
   private secretLayer!: Phaser.Tilemaps.TilemapLayer;
   private secretTiles: [number, number][] = [];
@@ -295,6 +302,7 @@ export class WorldScene extends Phaser.Scene {
       this.scene.stop("room");
       this.doors = [];
       this.enemies = [];
+      this.dizzy = [];
       this.stamps.clear();
       this.music?.stop();
       this.music = undefined;
@@ -414,8 +422,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Bubble stays up ~60ms per character (min 2.2s) so long lines can be read. */
-  private say(text: string, minMs = 2200) {
+  private say(text: string, minMs = 2200, sticky = false) {
     this.bubble?.destroy();
+    this.bubbleSticky = sticky;
     const bubble = (this.bubble = this.add
       .text(this.player.x, this.player.y - 14, text, {
         fontFamily: this.font,
@@ -485,11 +494,33 @@ export class WorldScene extends Phaser.Scene {
   /** Priority: what the player should do next. Creator flavor only once everything is done. */
   private idleLine(): string {
     const s = store.get();
-    if (s.hearts <= 1) return "Konti na lang heart ko! Nood tayo ng video para gumaling.";
+    if (s.hearts <= 1) return this.healTip();
     const g = this.goal();
     if (g?.door) return `Tara sa ${bridge.meta.names[g.door.platform] ?? g.door.platform}! ${this.arrowTo(g.x, g.y)}`;
     if (g) return `May tulay na papuntang hidden beach! ${this.arrowTo(g.x, g.y)}`;
     return Phaser.Utils.Array.GetRandom(CREATOR_LINES);
+  }
+
+  /** How to heal, cycling through the heal table (see docs/PLAN.md). */
+  private healTip(): string {
+    const tips = [
+      "Manood ng Facebook video para full heart + bonus heart!",
+      "Manood ng YouTube video para full heart!",
+      "Manood ng TikTok video para +2 hearts!",
+      "Mag-click ng post para +1 heart!",
+    ];
+    return tips[this.healTipIdx++ % tips.length];
+  }
+
+  /** On the last heart, a heal tip every few seconds, even while walking. */
+  private healReminder(time: number) {
+    if (store.get().hearts !== 1) {
+      this.healTipAt = 0;
+      return;
+    }
+    if (this.prompt || time < this.healTipAt) return;
+    this.healTipAt = time + 9000;
+    this.say(this.healTip(), 4500, true);
   }
 
   private arrowTo(x: number, y: number) {
@@ -628,13 +659,57 @@ export class WorldScene extends Phaser.Scene {
       this.knockUntil = this.time.now + 140;
     }
 
-    if (left <= 0) {
-      this.path = [];
-      this.sfx("gameover");
-      this.setPaused(true);
-      this.player.setFrame(DIR_COL.down);
-      bridge.emit("dead");
-    }
+    if (left <= 0) this.faint();
+  }
+
+  /** Dizzy wobble with stars, then Pogi keels over; the CONTINUE? screen only comes after. */
+  private faint() {
+    this.path = [];
+    this.setPaused(true);
+    this.sfx("gameover");
+    this.bubble?.destroy();
+    this.tweens.killTweensOf(this.player);
+    this.player.clearTint().setAlpha(1).setScale(1).setAngle(0).setFrame(DIR_COL.down);
+    const y = (this.faintY = this.player.y);
+    // the stars circle Pogi's head, and follow it down when he falls (head ends up on the right)
+    const head = { x: this.player.x, y: y - 14 };
+    const stars = (this.dizzy = [0, 1, 2].map(() =>
+      this.add
+        .text(this.player.x, y - 14, "★", { fontFamily: this.font, fontSize: "6px", color: "#ffe14d", stroke: "#000", strokeThickness: 2, resolution: 4 })
+        .setOrigin(0.5)
+        .setDepth(10_001),
+    ));
+    this.tweens.addCounter({
+      from: 0,
+      to: Math.PI * 2,
+      duration: 600,
+      repeat: -1,
+      onUpdate: (tw) => {
+        const t = tw.getValue() ?? 0;
+        stars.forEach((st, i) => {
+          if (!st.active) return tw.stop();
+          const a = t + (i * Math.PI * 2) / 3;
+          st.setPosition(head.x + Math.cos(a) * 7, head.y + Math.sin(a) * 2);
+        });
+      },
+    });
+    this.tweens.chain({
+      targets: this.player,
+      tweens: [
+        { angle: -12, duration: 150, yoyo: true, repeat: 2, ease: "Sine.inOut" },
+        { angle: 12, duration: 150, yoyo: true, ease: "Sine.inOut" },
+        // fall over onto the ground (rotated, the 24px-tall sprite is 16px tall)
+        {
+          angle: 90,
+          y: y + 4,
+          duration: 320,
+          ease: "Bounce.out",
+          onStart: () => this.tweens.add({ targets: head, x: head.x + 9, y: y, duration: 320, ease: "Bounce.out" }),
+          onComplete: () => this.player.setTint(0xb0b0b0),
+        },
+      ],
+      onComplete: () => this.time.delayedCall(700, () => bridge.emit("dead")),
+    });
   }
 
   /** Hit feedback on Pogi, not the whole screen: squash-and-jolt plus a spark burst where it landed. */
@@ -668,10 +743,23 @@ export class WorldScene extends Phaser.Scene {
 
   private revive() {
     if (store.get().hearts < BASE_HEARTS) store.set({ hearts: BASE_HEARTS });
+    this.dizzy.forEach((st) => st.destroy());
+    this.dizzy = [];
+    this.player.clearTint().setAngle(0).setY(this.faintY);
     this.invincibleUntil = this.time.now + 1500;
     this.setPaused(false);
     this.puff();
     this.say("Buhay pa ako!");
+  }
+
+  /** On the last heart Pogi flashes red like a heartbeat (the hurt flash owns the tint while invincible). */
+  private lowHpPulse(time: number) {
+    if (time < this.invincibleUntil) return;
+    if (store.get().hearts === 1 && time % 900 < 180) {
+      this.player.setTint(0xff6060).setTintMode(Phaser.TintModes.MULTIPLY);
+    } else if (this.player.isTinted) {
+      this.player.clearTint();
+    }
   }
 
   private puff() {
@@ -687,6 +775,8 @@ export class WorldScene extends Phaser.Scene {
     // hide once Pogi is at the right door (the action hint takes over)
     this.arrow.update(g?.door && g.door.platform === this.currentDoor ? null : g, time);
     if (this.paused) return;
+    this.lowHpPulse(time);
+    this.healReminder(time);
     this.updateEnemies(delta);
     if (time < this.knockUntil) return;
 
@@ -749,12 +839,12 @@ export class WorldScene extends Phaser.Scene {
       this.dir = vx > 0 ? "right" : vx < 0 ? "left" : vy > 0 ? "down" : "up";
       this.player.anims.play(`walk-${this.dir}`, true);
       this.lastMove = time;
-      this.bubble?.destroy();
+      if (!this.bubbleSticky) this.bubble?.destroy();
     } else {
       this.player.anims.stop();
       this.player.setFrame(DIR_COL[this.dir]);
-      // the action hint owns the space above Pogi's head
-      if (!this.prompt && time - this.lastMove > (this.spoke ? 7000 : 2500)) {
+      // the action hint owns the space above Pogi's head; on the last heart the heal reminder does
+      if (!this.prompt && !this.healTipAt && time - this.lastMove > (this.spoke ? 7000 : 2500)) {
         this.lastMove = time;
         this.spoke = true;
         this.say(this.idleLine(), 3200);

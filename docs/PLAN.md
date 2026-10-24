@@ -51,7 +51,7 @@ No GitHub token. Only secret: `TEABLE_API_TOKEN` (read-only).
 - **ISLAND COMPLETE!** (all 6 cleared): confetti, jeepney horn, "Salamat, idol!", unlocks hidden beach with owner message + newest project link (Teable `Secret`). Share-your-score button.
 - **Persistence:** `localStorage` (hearts, coins, cleared, position); "New game" in pause menu.
 - **Copy:** mostly English UI + Taglish flavor lines ("Uy!", "Aray!", "Ayos!", "Tara, nood tayo!").
-- **Pogi's idle lines (priority order):** low hearts → "watch a video to heal"; next uncleared building in channel order with a direction arrow ("Tara sa Facebook Hall! ↑"); hidden beach once unlocked; only after everything (incl. chest) → dev/creator flavor lines ("Render 99%…", "Thumbnail muna bago code.").
+- **Pogi's idle lines (priority order):** last heart → a heal tip every ~9s (even while walking), cycling the heal table; Pogi flashes red and the HUD blinks; next uncleared building in channel order with a direction arrow ("Tara sa Facebook Hall! ↑"); hidden beach once unlocked; only after everything (incl. chest) → dev/creator flavor lines ("Render 99%…", "Thumbnail muna bago code.").
 - **Sound:** pack SFX + chiptune, off by default, toggle remembered.
 
 ## Quick view (never lose a follower)

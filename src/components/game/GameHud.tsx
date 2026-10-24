@@ -7,11 +7,11 @@ import type { Level } from "@/lib/types";
 
 const useGame = () => useSyncExternalStore(store.subscribe, store.get, store.get);
 
-function Heart({ state }: { state: "full" | "empty" | "gold" }) {
+function Heart({ state, beat = false }: { state: "full" | "empty" | "gold"; beat?: boolean }) {
   return (
     <span
       aria-hidden
-      className="inline-block size-5 bg-no-repeat [image-rendering:pixelated]"
+      className={`inline-block size-5 bg-no-repeat [image-rendering:pixelated] ${beat ? "heartbeat" : ""}`}
       style={{
         backgroundImage: "url(/game/sprites/heart.png)",
         backgroundSize: "100px 20px",
@@ -80,6 +80,9 @@ export function GameHud({
   const hearts = Array.from({ length: Math.max(BASE_HEARTS, s.hearts) }, (_, i) =>
     i >= BASE_HEARTS ? "gold" : i < s.hearts ? "full" : "empty",
   ) as ("full" | "empty" | "gold")[];
+  // health tier: portrait goes blue → yellow → red; on the last heart it blinks and the heart beats
+  const critical = s.hearts === 1;
+  const face = s.hearts >= BASE_HEARTS ? "#5ec8ff" : s.hearts === 2 ? "#ffcc4d" : "#ff4d4d";
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex items-start justify-between gap-2 p-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
@@ -88,13 +91,13 @@ export function GameHud({
           type="button"
           onClick={onAbout}
           aria-label="About Pogi Island"
-          className="pixel-box pointer-events-auto flex items-center gap-1.5 self-start bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white"
+          className={`pixel-box pointer-events-auto flex items-center gap-1.5 self-start bg-[#1b1b2f]/90 px-1.5 py-1.5 text-white ${critical ? "low-hp" : ""}`}
         >
           {/* Pogi's face: top of the first (facing-down) frame of his sprite sheet, at 2x */}
           <span
             aria-hidden
-            className="inline-block h-7 w-8 shrink-0 border-2 border-black bg-[#5ec8ff] [image-rendering:pixelated]"
-            style={{ backgroundImage: "url(/game/sprites/pogi.png)", backgroundSize: "128px 192px", backgroundPosition: "-2px -1px" }}
+            className={`inline-block h-7 w-8 shrink-0 border-2 border-black [image-rendering:pixelated] ${critical ? "low-hp-face" : ""}`}
+            style={{ backgroundColor: face, backgroundImage: "url(/game/sprites/pogi.png)", backgroundSize: "128px 192px", backgroundPosition: "-2px -1px" }}
           />
           <span className="font-pixel text-[10px] text-yellow-300">POGI</span>
           <span
@@ -103,7 +106,7 @@ export function GameHud({
             aria-label={`${s.hearts} of ${MAX_HEARTS} hearts`}
           >
             {hearts.map((h, i) => (
-              <Heart key={i} state={h} />
+              <Heart key={i} state={h} beat={critical && i === 0} />
             ))}
           </span>
           <span className="font-pixel flex items-center gap-1 text-[10px]" aria-label={`${s.coins} coins`}>
