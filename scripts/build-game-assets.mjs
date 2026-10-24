@@ -572,13 +572,15 @@ const pond = [34, 33, 35, 35];
 rect9(ground, ...pond, "water", 0, 6);
 walk(...pond, 1);
 
-// ---- bridges (3 wide). vertical: x0..x0+2, y0..y1 · horizontal: x0..x1, y0..y0+2
+// ---- bridges (3 wide). vertical: x0..x0+2, y0..y1 · horizontal: x0..x1, y0..y0+2 (water span)
+// Each bridge also lands one tile onto both shores: the sand edge tiles have a transparent
+// rim, so a bridge stopping at the waterline leaves a sliver of (walkable) water showing.
 const bridges = [];
 const vBridge = (x0, y0, y1, secret = false) => {
-  for (let y = y0; y <= y1; y++) for (let i = 0; i < 3; i++) bridges.push({ x: x0 + i, y, tile: [i, 1], secret });
+  for (let y = y0 - 1; y <= y1 + 1; y++) for (let i = 0; i < 3; i++) bridges.push({ x: x0 + i, y, tile: [i, 1], secret });
 };
 const hBridge = (x0, x1, y0, secret = false) => {
-  for (let x = x0; x <= x1; x++) for (let i = 0; i < 3; i++) bridges.push({ x, y: y0 + i, tile: [3 + i, 1], secret });
+  for (let x = x0 - 1; x <= x1 + 1; x++) for (let i = 0; i < 3; i++) bridges.push({ x, y: y0 + i, tile: [3 + i, 1], secret });
 };
 vBridge(27, 22, 25); // main ↔ GitHub islet (north)
 hBridge(17, 19, 29); // main ↔ YouTube islet (west)
@@ -629,10 +631,12 @@ for (const b of bridges) if (!b.secret) road[idx(b.x, b.y)] = 2;
 for (let i = 0; i < W * H; i++) if (road[i]) blocked[i] = 0;
 
 const isBridge = (x, y) => bridges.some((b) => b.x === x && b.y === y);
+// roads join public bridges only; the hidden-beach road dead-ends at the shore until its bridge appears
+const isPublicBridge = (x, y) => bridges.some((b) => b.x === x && b.y === y && !b.secret);
 for (let y = 0; y < H; y++)
   for (let x = 0; x < W; x++) {
     if (road[idx(x, y)] !== 1) continue;
-    const r = (xx, yy) => inMap(xx, yy) && (road[idx(xx, yy)] > 0 || isBridge(xx, yy));
+    const r = (xx, yy) => inMap(xx, yy) && (road[idx(xx, yy)] > 0 || isPublicBridge(xx, yy));
     const mask = (r(x, y - 1) ? 1 : 0) | (r(x + 1, y) ? 2 : 0) | (r(x, y + 1) ? 4 : 0) | (r(x - 1, y) ? 8 : 0);
     set(roadsL, x, y, gid("custom", mask, 0));
   }
