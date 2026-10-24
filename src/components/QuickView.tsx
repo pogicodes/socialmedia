@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect } from "react";
 import { GameShell } from "./game/GameShell";
-import { Hud } from "./Hud";
 import { Icon } from "./Icon";
 import { LevelCard } from "./LevelCards";
 import type { HubData } from "@/lib/types";
@@ -26,7 +25,7 @@ export function QuickView({ data }: { data: HubData }) {
   }, []);
 
   return (
-    <div className="world min-h-dvh pb-28">
+    <div className="world min-h-dvh pb-24">
       <header className="relative z-10 flex flex-col items-center px-4 pt-6 pb-4 text-center">
         <div className="pixel-box grid size-16 place-items-center bg-white">
           <Image src="/logo.png" alt="PogiCodes logo" width={56} height={56} priority />
@@ -82,7 +81,6 @@ export function QuickView({ data }: { data: HubData }) {
         ))}
       </main>
 
-      <Hud levels={levels} />
       <GameShell data={data} />
     </div>
   );

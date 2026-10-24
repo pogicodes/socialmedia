@@ -12,6 +12,7 @@ import { IslandComplete, ShareButtons } from "./IslandComplete";
 import { GameHud } from "./GameHud";
 import { Joystick } from "./Joystick";
 import { FollowAll, Modal } from "./Modals";
+import { Quest } from "./Quest";
 import { bridge, MAX_TREASURES } from "@/game/bridge";
 import { engage, store } from "@/game/state";
 import type { HubData, PlatformId } from "@/lib/types";
@@ -56,7 +57,7 @@ export function GameShell({ data }: { data: HubData }) {
   if (mode === "game") return <Game data={data} onQuickView={() => choose("quick")} onFail={() => setMode("quick")} />;
   if (mode === "quick")
     return (
-      <div className="fixed right-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-end gap-2">
+      <div className="fixed right-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-end gap-2">
         {reason === "reduced" && (
           <p className="pixel-box max-w-[14rem] bg-white px-2 py-1 text-xs text-zinc-700">Reduced motion is on, so we opened quick view.</p>
         )}
@@ -78,7 +79,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const [dead, setDead] = useState(false);
   const [modal, setModal] = useState<"follow" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
   const [complete, setComplete] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const [intro, setIntro] = useState(false);
   const [hint, setHint] = useState(false);
   const deadRef = useRef(false);
@@ -148,7 +149,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   // after ready: sound pref, deep link, intro
   useEffect(() => {
     if (!ready) return;
-    const on = localStorage.getItem(SFX_KEY) === "on";
+    const on = localStorage.getItem(SFX_KEY) !== "off";
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync persisted pref once the engine is up
     setSoundOn(on);
     bridge.emit("sound", on);
@@ -251,7 +252,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
           <>
             <Joystick onFirstMove={() => setHint(false)} />
             <GameHud
-              total={levels.length}
+              levels={levels}
               soundOn={soundOn}
               onSound={toggleSound}
               onFollowAll={() => pauseFor("follow")}
@@ -283,6 +284,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
 
       {level && (
         <LevelSheet level={level} onClose={closeLevel}>
+          <Quest level={level} />
           <LevelCard level={level} data={data} />
         </LevelSheet>
       )}
@@ -292,6 +294,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
           title={`🎁 TREASURE ${item.index + 1}/${bridge.meta.rooms[item.platform]?.length ?? 1}`}
           onClose={closeItem}
         >
+          <Quest level={itemLevel} />
           <Treasure level={itemLevel} data={data} index={item.index} />
         </Modal>
       )}

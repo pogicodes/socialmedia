@@ -74,9 +74,6 @@ export const platformIds: Record<string, PlatformId> = {
   Threads: "threads",
 };
 
-/** Platforms that get an island/quick-view card but are kept out of the bottom quick-link bar. */
-export const navExclude: PlatformId[] = ["website", "threads"];
-
 type FallbackLevel = Omit<Level, "iconPath" | "stats">;
 
 export const fallbackLevels: FallbackLevel[] = [

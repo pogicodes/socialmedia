@@ -33,10 +33,11 @@ export function IntroDialog({
           setChars(instant ? Infinity : 0);
         } else onDone();
       },
-      instant ? 1800 : 1100,
+      // longer lines stay up longer so they can be read
+      (instant ? 1800 : 1100) + text.length * 30,
     );
     return () => clearTimeout(t);
-  }, [chars, lineDone, line, lines.length, instant, onDone]);
+  }, [chars, lineDone, line, lines.length, instant, onDone, text.length]);
 
   const advance = () => {
     if (!lineDone) setChars(Infinity);
@@ -47,7 +48,7 @@ export function IntroDialog({
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[36] px-3">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-[36] px-3">
       <button
         type="button"
         onClick={advance}

@@ -404,9 +404,10 @@ export class WorldScene extends Phaser.Scene {
     this.tweens.add({ targets: t, y: t.y - 16, alpha: 0, duration: 900, ease: "Cubic.out", onComplete: () => t.destroy() });
   }
 
-  private say(text: string, ms = 2200) {
+  /** Bubble stays up ~60ms per character (min 2.2s) so long lines can be read. */
+  private say(text: string, minMs = 2200) {
     this.bubble?.destroy();
-    this.bubble = this.add
+    const bubble = (this.bubble = this.add
       .text(this.player.x, this.player.y - 14, text, {
         fontFamily: this.font,
         fontSize: "6px",
@@ -418,8 +419,10 @@ export class WorldScene extends Phaser.Scene {
         resolution: 4,
       })
       .setOrigin(0.5, 1)
-      .setDepth(10_001);
-    this.time.delayedCall(ms, () => this.bubble?.destroy());
+      .setDepth(10_001));
+    const ms = Math.min(9000, Math.max(minMs, 1200 + text.length * 60));
+    // only clear this bubble, not a newer one said in the meantime
+    this.time.delayedCall(ms, () => bubble.destroy());
   }
 
   private stamp(id: PlatformId, animate: boolean) {
