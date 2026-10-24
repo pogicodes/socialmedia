@@ -733,12 +733,10 @@ export class WorldScene extends Phaser.Scene {
     // door detection
     const f = this.feet();
     this.currentDoor = this.doors.find((d) => Phaser.Geom.Rectangle.Contains(d.zone, f.x, f.y))?.platform ?? null;
+    // walk in: stepping up into a doorway enters (walking past it, or back out of it, does not)
+    if (this.currentDoor && vy < 0 && !this.path.length) return this.enterRoom(this.currentDoor);
     this.inChest = !!(this.unlocked && this.chestZone && Phaser.Geom.Rectangle.Contains(this.chestZone, f.x, f.y));
-    const prompt = this.inChest
-      ? "OPEN CHEST"
-      : this.currentDoor
-        ? `ENTER ${(bridge.meta.names[this.currentDoor] ?? this.currentDoor).toUpperCase()}`
-        : null;
+    const prompt = this.inChest ? "OPEN CHEST" : null;
     if (prompt !== this.prompt) {
       this.prompt = prompt;
       if (prompt) this.bubble?.destroy();

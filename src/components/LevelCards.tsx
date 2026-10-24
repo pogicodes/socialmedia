@@ -2,7 +2,7 @@
 
 import { track } from "@vercel/analytics";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { textOn } from "@/lib/color";
 import { facebookEmbed, tiktokEmbed } from "@/lib/embeds";
 import type { HubData, Level, LevelStats, PlatformId, Post, Repo, Video } from "@/lib/types";
@@ -65,13 +65,16 @@ function Cta({ level, href }: { level: Level; href?: string }) {
   );
 }
 
-/** Click-to-play YouTube player + title. Key it by video id to reset. */
-function VideoPlayer({ video }: { video: Video }) {
-  const [playing, setPlaying] = useState(false);
+/** Click-to-play (or autoplay) YouTube player + title. Key it by video id to reset. */
+function VideoPlayer({ video, autoPlay = false }: { video: Video; autoPlay?: boolean }) {
+  const [playing, setPlaying] = useState(autoPlay);
+  useEffect(() => {
+    if (autoPlay) track("video_play", { id: video.id, source: "treasure" });
+  }, [autoPlay, video.id]);
   return (
     <>
       <div className="pixel-box relative aspect-video overflow-hidden bg-black">
-          <WatchTracker key={video.id} active={playing} platform="youtube" id={video.id} />
+        <WatchTracker key={video.id} active={playing} platform="youtube" id={video.id} />
         {playing ? (
           <iframe
             className="absolute inset-0 h-full w-full"
@@ -191,13 +194,19 @@ export function VerticalEmbed({
   src,
   title,
   onPlay,
+  autoPlay = false,
 }: {
   level: Pick<Level, "id" | "color">;
   src: string;
   title: string;
   onPlay?: () => void;
+  /** Load the player right away (e.g. opened from a treasure chest) instead of waiting for a tap. */
+  autoPlay?: boolean;
 }) {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoPlay);
+  useEffect(() => {
+    if (autoPlay) track("video_play", { platform: level.id, source: "treasure" });
+  }, [autoPlay, level.id]);
   return (
     <div className="pixel-box relative mx-auto aspect-[9/16] w-full max-w-[240px] overflow-hidden bg-black">
       <WatchTracker active={playing} platform={level.id} id={src} />
@@ -313,7 +322,7 @@ export function Treasure({ level, data, index }: { level: Level; data: HubData; 
   let body: React.ReactNode = null;
   if (level.id === "youtube") {
     const v = data.videos[index];
-    if (v) body = <VideoPlayer key={v.id} video={v} />;
+    if (v) body = <VideoPlayer key={v.id} video={v} autoPlay />;
   } else if (level.id === "github") {
     const r = data.repos[index];
     if (r) body = <RepoLink repo={r} />;
@@ -323,7 +332,7 @@ export function Treasure({ level, data, index }: { level: Level; data: HubData; 
     if (p)
       body = src ? (
         <>
-          <VerticalEmbed key={p.url} level={level} src={src} title={p.title} />
+          <VerticalEmbed key={p.url} level={level} src={src} title={p.title} autoPlay />
           <div className="mt-3">
             <PostLink level={level} post={p} />
           </div>
