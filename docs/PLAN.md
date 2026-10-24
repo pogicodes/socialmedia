@@ -46,7 +46,7 @@ No GitHub token. Only secret: `TEABLE_API_TOKEN` (read-only).
 - **Guide arrow:** bouncing arrow over the next uncleared building in channel order (screen-edge arrow when off screen), then the hidden-beach chest; inside rooms it points board → unopened chests → exit.
 - **Enemies (36):** lamok (zig-zag), ipis (sudden dashes); ~10 on the main island, 4–5 per islet. Slow, readable patrols. Doors are safe zones (~2 tiles). Auto-walk never stops on hit. 0.5s i-frames.
 - **Hearts:** 3 (4 with golden). Hit = −1 heart, knockback, "Aray!". Heal by content (table above); FB/YT/TikTok embeds use player APIs to measure ≥15s; embeds load only on tap.
-- **0 hearts → "CONTINUE?"** offering latest Facebook reel first (the "ad"). Watch 15s → revive in place, full hearts. **SKIP unlocks after a 5s countdown** → respawn at jeepney, cleared levels kept. (A play-aware countdown would need the Facebook SDK to read playback state — skipped.)
+- **0 hearts → "CONTINUE?"** offering latest Facebook reel first (the "ad"). Watch 15s → revive in place, full hearts. Or **BACK TO THE JEEPNEY** right away (no countdown) → respawn at jeepney, cleared levels kept.
 - **Coins:** ~20 on the map (some near enemies); +5 and "★ CLEARED" stamp per building engaged. HUD: `❤️❤️❤️ 🪙 12 ★ 2/6` + **Follow all** button.
 - **ISLAND COMPLETE!** (all 6 cleared): confetti, jeepney horn, "Salamat, idol!", unlocks hidden beach with owner message + newest project link (Teable `Secret`). Share-your-score button.
 - **Persistence:** `localStorage` (hearts, coins, cleared, position); "New game" in pause menu.

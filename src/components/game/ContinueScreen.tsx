@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { VerticalEmbed, embedFor } from "../LevelCards";
 import type { HubData } from "@/lib/types";
 
-/** Seconds before "skip" unlocks — like a video ad. */
-const SKIP_AFTER = 5;
-
-/** Arcade "CONTINUE?" — watching 15s revives in place; skip (after a countdown) respawns at the jeepney. */
+/** Arcade "CONTINUE?" — watching 15s revives in place; or head straight back to the jeepney. */
 export function ContinueScreen({
   data,
   onGiveUp,
@@ -15,18 +12,11 @@ export function ContinueScreen({
   data: HubData;
   onGiveUp: () => void;
 }) {
-  const [skipIn, setSkipIn] = useState(SKIP_AFTER);
   const [watching, setWatching] = useState(false);
 
   const fb = data.levels.find((l) => l.id === "facebook");
   const reel = (data.posts.facebook ?? []).find((p) => embedFor({ id: "facebook" }, p.url));
   const yt = data.videos[0];
-
-  useEffect(() => {
-    if (skipIn <= 0) return;
-    const t = setTimeout(() => setSkipIn((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [skipIn]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-labelledby="continue-title">
@@ -60,11 +50,9 @@ export function ContinueScreen({
         <button
           type="button"
           onClick={onGiveUp}
-          disabled={skipIn > 0}
-          aria-live="polite"
-          className="pixel-btn font-pixel mt-4 w-full bg-white py-3 text-[10px] text-black disabled:cursor-not-allowed disabled:bg-zinc-500 disabled:text-zinc-200"
+          className="pixel-btn font-pixel mt-4 w-full bg-white py-3 text-[10px] text-black"
         >
-          {skipIn > 0 ? `SKIP IN ${skipIn}…` : "SKIP ▶▶ BACK TO THE JEEPNEY"}
+          BACK TO THE JEEPNEY 🚌
         </button>
       </div>
     </div>
