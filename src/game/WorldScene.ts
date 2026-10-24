@@ -109,6 +109,9 @@ export class WorldScene extends Phaser.Scene {
   private arrow!: GuideArrow;
   /** "Hidden beach" was picked while inside a room: walk there once back outside. */
   private chestAfterWake = false;
+  private jeep?: Phaser.GameObjects.Image;
+  /** Hopping out of the jeepney at the start of a run: no input until he lands. */
+  private arriving = false;
 
   constructor() {
     super("world");
@@ -201,7 +204,7 @@ export class WorldScene extends Phaser.Scene {
           this.add.image(x, y + 20, `sign-${prop(o, "platform")}`).setOrigin(0.5, 1).setDepth(y + 20);
           break;
         case "jeepney":
-          this.add.image(x, y, "jeepney").setOrigin(0, 0).setDepth(y + 28);
+          this.jeep = this.add.image(x, y, "jeepney").setOrigin(0, 0).setDepth(y + 28);
           break;
         case "spawn":
           this.spawn = { x, y };
@@ -247,6 +250,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     // ---------------------------------------------------------- player
+    const atSpawn = !store.get().pos;
     const pos = store.get().pos ?? { x: this.spawn.x, y: this.spawn.y - FEET };
     this.player = this.physics.add.sprite(pos.x, pos.y, "pogi", 0);
     (this.player.body as Phaser.Physics.Arcade.Body).setSize(10, 6).setOffset(3, 18);
@@ -316,6 +320,8 @@ export class WorldScene extends Phaser.Scene {
       this.inChest = false;
       this.prompt = null;
       this.chestAfterWake = false;
+      this.arriving = false;
+      this.jeep = undefined;
       this.paused = false;
       this.spoke = false;
     });
@@ -323,7 +329,9 @@ export class WorldScene extends Phaser.Scene {
     // music stops on shutdown; bring it back after a restart
     if (this.soundOn) this.setSound(true);
     this.invincibleUntil = data?.respawned ? this.time.now + 1500 : 0;
-    if (data?.respawned) this.say("Tara ulit!");
+    if (atSpawn && this.jeep && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+      this.arriveByJeepney(data?.respawned ? "Tara ulit!" : null);
+    else if (data?.respawned) this.say("Tara ulit!");
     bridge.emit("ready");
   }
 
@@ -532,7 +540,7 @@ export class WorldScene extends Phaser.Scene {
   // ============================================================ actions
 
   private interact() {
-    if (this.paused || !this.sys.isActive()) return;
+    if (this.paused || this.arriving || !this.sys.isActive()) return;
     if (this.inChest) return this.openChest();
     if (this.currentDoor) this.enterRoom(this.currentDoor);
   }
@@ -541,6 +549,10 @@ export class WorldScene extends Phaser.Scene {
   private goto(id: PlatformId) {
     const door = this.doors.find((d) => d.platform === id);
     if (!door || !this.sys.isActive()) return;
+    if (this.arriving) {
+      this.tweens.killTweensOf(this.player);
+      this.endArrival();
+    }
     this.player.setPosition(door.tx * T + 8, door.ty * T + 8 - FEET);
     this.enterRoom(id, true);
   }
@@ -581,7 +593,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private tapTo(sx: number, sy: number) {
-    if (this.paused || !this.sys.isActive()) return;
+    if (this.paused || this.arriving || !this.sys.isActive()) return;
     const wp = this.cameras.main.getWorldPoint(sx, sy);
     let target = this.tileOf(wp.x, wp.y);
     this.pathTarget = null;
@@ -638,7 +650,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private hurt(from: Phaser.GameObjects.Sprite) {
-    if (this.paused || this.time.now < this.invincibleUntil) return;
+    if (this.paused || this.arriving || this.time.now < this.invincibleUntil) return;
     // doors are safe zones
     const f = this.feet();
     if (this.doors.some((d) => Phaser.Geom.Rectangle.Contains(d.zone, f.x, f.y))) return;
@@ -762,6 +774,71 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Start of a run: the jeepney rocks and puffs, then Pogi hops out of the rear entrance
+   * (the jeepney faces right, so its back is on the left) and walks to the spawn point.
+   */
+  private arriveByJeepney(line: string | null) {
+    const jeep = this.jeep!;
+    const p = this.player;
+    const y = this.spawn.y - FEET;
+    const door = { x: jeep.x + 6, y };
+    const land = { x: jeep.x - 10, y };
+    this.arriving = true;
+    (p.body as Phaser.Physics.Arcade.Body).enable = false;
+    this.dir = "left";
+    p.setPosition(door.x, door.y).setFrame(DIR_COL.left).setAlpha(0).setDepth(jeep.depth - 1);
+
+    // jeepney rocks to a stop; exhaust puff out the back
+    this.tweens.add({ targets: jeep, y: jeep.y - 1, duration: 90, yoyo: true, repeat: 2, ease: "Sine.inOut" });
+    const smoke = this.add.sprite(jeep.x - 2, jeep.y + 22, "smoke").setScale(0.4).setAlpha(0.8).setDepth(jeep.depth + 1);
+    smoke.play("smoke").once("animationcomplete", () => smoke.destroy());
+
+    // hop out: an arc from the back door down to the sand, in front of the jeepney once clear of it
+    const hop = { t: 0 };
+    this.tweens.add({
+      targets: hop,
+      t: 1,
+      delay: 450,
+      duration: 380,
+      ease: "Linear",
+      onStart: () => p.setAlpha(1),
+      onUpdate: () => {
+        p.setPosition(Phaser.Math.Linear(door.x, land.x, hop.t), y - Math.sin(hop.t * Math.PI) * 9);
+        if (p.x < jeep.x) p.setDepth(y + FEET);
+      },
+      onComplete: () => {
+        this.sfx("step", 0.5);
+        this.puff();
+        this.tweens.add({ targets: p, scaleX: 1.15, scaleY: 0.85, duration: 70, yoyo: true, ease: "Quad.out" });
+        // then a few steps over to the spawn point
+        p.anims.play("walk-left", true);
+        this.tweens.add({
+          targets: p,
+          x: this.spawn.x,
+          delay: 140,
+          duration: ((land.x - this.spawn.x) / SPEED) * 1000,
+          onComplete: () => {
+            this.endArrival();
+            if (line) this.say(line);
+          },
+        });
+      },
+    });
+  }
+
+  private endArrival() {
+    const p = this.player;
+    this.arriving = false;
+    p.anims.stop();
+    p.setAlpha(1).setScale(1).setDepth(p.y + FEET);
+    this.dir = "down";
+    p.setFrame(DIR_COL.down);
+    (p.body as Phaser.Physics.Arcade.Body).enable = true;
+    (p.body as Phaser.Physics.Arcade.Body).reset(p.x, p.y);
+    this.lastMove = this.time.now;
+  }
+
   private puff() {
     const s = this.add.sprite(this.player.x, this.player.y + FEET - 4, "smoke").setDepth(this.player.y + 1).setScale(0.6);
     s.play("smoke").once("animationcomplete", () => s.destroy());
@@ -771,10 +848,10 @@ export class WorldScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     reportAnchor(this, this.player);
-    const g = this.paused ? null : this.goal();
+    const g = this.paused || this.arriving ? null : this.goal();
     // hide once Pogi is at the right door (the action hint takes over)
     this.arrow.update(g?.door && g.door.platform === this.currentDoor ? null : g, time);
-    if (this.paused) return;
+    if (this.paused || this.arriving) return;
     this.lowHpPulse(time);
     this.healReminder(time);
     this.updateEnemies(delta);
