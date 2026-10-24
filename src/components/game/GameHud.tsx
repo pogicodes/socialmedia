@@ -22,24 +22,33 @@ function Heart({ state }: { state: "full" | "empty" | "gold" }) {
   );
 }
 
-/** One sticker per world: grey until cleared, then the platform's color (pops in live). */
-function Stickers({ levels, cleared }: { levels: Level[]; cleared: Level["id"][] }) {
+/** A world's badge: grey until cleared, then the platform's color (pops in live). */
+export function Sticker({ level, done, big = false }: { level: Level; done: boolean; big?: boolean }) {
   return (
-    <ul className="flex gap-1" aria-label={`${cleared.length} of ${levels.length} worlds cleared`}>
-      {levels.map((l) => {
-        const done = cleared.includes(l.id);
-        return (
-          <li
-            key={`${l.id}-${done}`}
-            aria-label={`${l.platform} ${done ? "cleared" : "not cleared"}`}
-            className={`grid size-6 place-items-center border-2 border-black ${done ? "pop-in text-white shadow-[2px_2px_0_#000]" : "bg-[#1b1b2f]/70 text-white/30"}`}
-            style={done ? { backgroundColor: l.color } : undefined}
-          >
-            <Icon path={l.iconPath} className={`size-3.5 ${done ? "drop-shadow-[1px_1px_0_#000]" : ""}`} />
-          </li>
-        );
-      })}
-    </ul>
+    <span
+      aria-hidden
+      className={`grid shrink-0 place-items-center border-2 border-black ${big ? "size-10" : "size-6"} ${done ? "pop-in text-white shadow-[2px_2px_0_#000]" : "bg-[#1b1b2f]/70 text-white/30"}`}
+      style={done ? { backgroundColor: level.color } : undefined}
+    >
+      <Icon path={level.iconPath} className={`${big ? "size-5" : "size-3.5"} ${done ? "drop-shadow-[1px_1px_0_#000]" : ""}`} />
+    </span>
+  );
+}
+
+/** One sticker per world; tap to see what each badge is and how to get it. */
+function Stickers({ levels, cleared, onOpen }: { levels: Level[]; cleared: Level["id"][]; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Badges: ${cleared.length} of ${levels.length} collected`}
+      className="pointer-events-auto flex gap-1 self-start"
+    >
+      {levels.map((l) => (
+        // keyed by state so a newly earned badge remounts and pops in
+        <Sticker key={`${l.id}-${cleared.includes(l.id)}`} level={l} done={cleared.includes(l.id)} />
+      ))}
+    </button>
   );
 }
 
@@ -48,12 +57,14 @@ export function GameHud({
   soundOn,
   onSound,
   onFollowAll,
+  onBadges,
   onMenu,
 }: {
   levels: Level[];
   soundOn: boolean;
   onSound: () => void;
   onFollowAll: () => void;
+  onBadges: () => void;
   onMenu: () => void;
 }) {
   const s = useGame();
@@ -93,7 +104,7 @@ export function GameHud({
             {s.cleared.length}/{levels.length}
           </span>
         </div>
-        <Stickers levels={levels} cleared={s.cleared} />
+        <Stickers levels={levels} cleared={s.cleared} onOpen={onBadges} />
       </div>
       <div className="pointer-events-auto flex shrink-0 gap-1">
         <button

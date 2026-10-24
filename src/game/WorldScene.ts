@@ -128,7 +128,7 @@ export class WorldScene extends Phaser.Scene {
       this.load.audio(a, `${BASE}/audio/${a}.mp3`);
   }
 
-  create() {
+  create(data?: { respawned?: boolean }) {
     this.font =
       getComputedStyle(document.documentElement).getPropertyValue("--font-press-start").trim() || "monospace";
 
@@ -307,6 +307,10 @@ export class WorldScene extends Phaser.Scene {
       this.spoke = false;
     });
 
+    // music stops on shutdown; bring it back after a restart
+    if (this.soundOn) this.setSound(true);
+    this.invincibleUntil = data?.respawned ? this.time.now + 1500 : 0;
+    if (data?.respawned) this.say("Tara ulit!");
     bridge.emit("ready");
   }
 
@@ -651,12 +655,10 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  /** Back to the jeepney = a fresh run: coins, map coins and chests reset (badges stay). */
   private respawn() {
-    store.set({ hearts: BASE_HEARTS, pos: null });
-    this.player.setPosition(this.spawn.x, this.spawn.y - FEET);
-    this.invincibleUntil = this.time.now + 1500;
-    this.setPaused(false);
-    this.say("Tara ulit!");
+    store.set({ hearts: BASE_HEARTS, pos: null, coins: 0, collected: [], opened: [] });
+    this.scene.restart({ respawned: true });
   }
 
   private revive() {

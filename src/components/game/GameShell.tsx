@@ -12,7 +12,7 @@ import { IslandComplete, ShareButtons } from "./IslandComplete";
 import { GameHud } from "./GameHud";
 import { Joystick } from "./Joystick";
 import { FollowAll, Modal } from "./Modals";
-import { Quest } from "./Quest";
+import { Badges, Quest } from "./Quest";
 import { bridge, MAX_TREASURES } from "@/game/bridge";
 import { engage, store } from "@/game/state";
 import type { HubData, PlatformId } from "@/lib/types";
@@ -77,7 +77,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const [open, setOpen] = useState<PlatformId | null>(null);
   const [item, setItem] = useState<{ platform: PlatformId; index: number } | null>(null);
   const [dead, setDead] = useState(false);
-  const [modal, setModal] = useState<"follow" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
+  const [modal, setModal] = useState<"follow" | "badges" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
   const [complete, setComplete] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [intro, setIntro] = useState(false);
@@ -256,6 +256,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
               soundOn={soundOn}
               onSound={toggleSound}
               onFollowAll={() => pauseFor("follow")}
+              onBadges={() => pauseFor("badges")}
               onMenu={() => pauseFor("menu")}
             />
 
@@ -344,6 +345,11 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       )}
 
       {modal === "follow" && <FollowAll levels={levels} onClose={() => pauseFor(null)} />}
+      {modal === "badges" && (
+        <Modal title="BADGES" onClose={() => pauseFor(null)}>
+          <Badges levels={levels} />
+        </Modal>
+      )}
       {modal === "menu" && (
         <Modal title="MENU" onClose={() => pauseFor(null)}>
           <div className="grid gap-2">
