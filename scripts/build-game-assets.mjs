@@ -342,8 +342,8 @@ const DOWN_TOP = [
   "....kssmmssk....",
   ".....kksskk.....",
   "...kkjjjjjjkk...",
-  "..ksjjjnnjjjsk..",
-  "..ksjjjnnjjjsk..",
+  "..ksjjjjjjjjsk..",
+  "..ksjjjjjjjjsk..",
   "..ksjjjjjjjjsk..",
   "..kskJJJJJJksk..",
   "...kkppppppkk...",
@@ -364,9 +364,9 @@ const UP_TOP = [
   "....kksssskk....",
   ".....kksskk.....",
   "...kkjjjjjjkk...",
-  "..ksjjnnnnjjsk..",
-  "..ksjjnjjnjjsk..",
-  "..ksjjnnnnjjsk..",
+  "..ksjjjjjjjjsk..",
+  "..ksjjjjjjjjsk..",
+  "..ksjjjjjjjjsk..",
   "..kskJJJJJJksk..",
   "...kkppppppkk...",
   "....kppppppk....",
@@ -408,8 +408,8 @@ const SIDE_LEGS = [
 const mirror = (rows) => rows.map((r) => r.padEnd(16, ".").slice(0, 16).split("").reverse().join(""));
 const POGI_PAL = {
   k: [20, 18, 24], h: [28, 26, 36], H: [78, 74, 104], s: [201, 138, 90], S: [168, 108, 68],
-  g: [12, 12, 18], G: [110, 180, 240], m: [122, 59, 43], j: [24, 119, 242], J: [15, 79, 168],
-  n: [255, 255, 255], p: [45, 45, 58], f: [230, 57, 70],
+  g: [12, 12, 18], G: [110, 180, 240], m: [122, 59, 43], j: [44, 44, 50], J: [32, 32, 38],
+  n: [255, 255, 255], p: [128, 128, 136], f: [230, 57, 70],
 };
 // columns: down, up, left, right — rows: walk frames 0..3
 await asciiGrid(
