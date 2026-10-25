@@ -823,7 +823,9 @@ export class WorldScene extends Phaser.Scene {
           duration: ((land.x - this.spawn.x) / SPEED) * 1000,
           onComplete: () => {
             this.endArrival();
-            if (line) this.say(line);
+            // first thing a new player reads: where to go (the guide arrow bounces over it)
+            this.spoke = true;
+            this.say(line ?? this.idleLine(), 3200);
           },
         });
       },
