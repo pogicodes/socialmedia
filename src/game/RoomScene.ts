@@ -326,9 +326,9 @@ export class RoomScene extends Phaser.Scene {
   private open(s: Spot) {
     const id = `${this.platform}:${s.index}`;
     if (!store.get().opened.includes(id)) {
-      const coin = s.index >= 0 ? 1 : 0;
-      store.set((st) => ({ opened: [...st.opened, id], coins: st.coins + coin }));
-      if (coin) {
+      const points = s.index >= 0 ? 1 : 0;
+      store.set((st) => ({ opened: [...st.opened, id], score: st.score + points }));
+      if (points) {
         this.sfx("coin", 0.5);
         this.floatText("+1", "#ffe14d");
       }

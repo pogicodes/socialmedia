@@ -6,14 +6,14 @@ import { site } from "@/site.config";
 
 const COLORS = ["#ffe14d", "#1877F2", "#FF0033", "#25F4EE", "#E1306C", "#8B5CF6", "#58b04f"];
 
-export function shareText(coins: number) {
-  return `I cleared Pogi Island 🏝️ with ${coins} coins! Kaya mo ba? 😎`;
+export function shareText(score: number) {
+  return `I cleared Pogi Island 🏝️ with ${score} points! Kaya mo ba? 😎`;
 }
 
 /** Native share sheet when available; otherwise Facebook / X / copy link. */
-export function ShareButtons({ coins, source }: { coins: number; source: string }) {
+export function ShareButtons({ score, source }: { score: number; source: string }) {
   const [copied, setCopied] = useState(false);
-  const text = shareText(coins);
+  const text = shareText(score);
   const url = site.url;
   const canNative = typeof navigator !== "undefined" && !!navigator.share;
 
@@ -67,12 +67,12 @@ export function ShareButtons({ coins, source }: { coins: number; source: string 
 }
 
 export function IslandComplete({
-  coins,
+  score,
   total,
   onHiddenBeach,
   onClose,
 }: {
-  coins: number;
+  score: number;
   total: number;
   onHiddenBeach: () => void;
   onClose: () => void;
@@ -106,13 +106,13 @@ export function IslandComplete({
         />
         <p className="font-pixel mt-3 text-[11px]">&ldquo;Salamat, idol!&rdquo;</p>
         <p className="mt-2 text-sm text-zinc-300">
-          All {total} worlds cleared with <strong className="text-yellow-300">{coins} coins</strong>. A bridge just appeared to the east…
+          All {total} worlds cleared with <strong className="text-yellow-300">{score} points</strong>. A bridge just appeared to the east…
         </p>
         <div className="mt-4 grid gap-2">
           <button type="button" onClick={onHiddenBeach} className="pixel-btn font-pixel bg-yellow-300 py-3 text-[10px] text-black">
             🏝️ GO TO THE HIDDEN BEACH
           </button>
-          <ShareButtons coins={coins} source="complete" />
+          <ShareButtons score={score} source="complete" />
           <button type="button" onClick={onClose} className="font-pixel mt-1 text-[9px] text-zinc-400 underline">
             Keep exploring
           </button>

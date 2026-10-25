@@ -177,7 +177,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       setComplete(true);
       bridge.emit("complete");
       bridge.emit("pause", true);
-      track("island_complete", { coins: s.coins });
+      track("island_complete", { score: s.score });
     };
     check();
     const unsub = store.subscribe(check);
@@ -314,7 +314,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
 
       {complete && !open && (
         <IslandComplete
-          coins={store.get().coins}
+          score={store.get().score}
           total={levels.length}
           onHiddenBeach={() => {
             setComplete(false);
@@ -341,16 +341,16 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
             {data.secret.linkLabel.toUpperCase()} ▶
           </a>
           <div className="mt-3">
-            <ShareButtons coins={store.get().coins} source="secret" />
+            <ShareButtons score={store.get().score} source="secret" />
           </div>
         </Modal>
       )}
       {modal === "share" && (
         <Modal title="SHARE MY SCORE" onClose={() => pauseFor(null)}>
           <p className="mb-3 text-sm text-zinc-700">
-            {store.get().cleared.length}/{levels.length} worlds · {store.get().coins} coins
+            {store.get().cleared.length}/{levels.length} worlds · {store.get().score} points
           </p>
-          <ShareButtons coins={store.get().coins} source="menu" />
+          <ShareButtons score={store.get().score} source="menu" />
         </Modal>
       )}
 
@@ -412,7 +412,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       {modal === "reset" && (
         <Modal title="RESET PROGRESS?" onClose={() => pauseFor("menu")}>
           <p className="text-sm text-zinc-800">
-            Sigurado ka? This clears your hearts, {store.get().coins} coins, {store.get().cleared.length}/{levels.length} cleared
+            Sigurado ka? This clears your hearts, {store.get().score} points, {store.get().cleared.length}/{levels.length} cleared
             worlds and the hidden-beach unlock. Pogi goes back to the jeepney.
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">

@@ -647,7 +647,7 @@ export class WorldScene extends Phaser.Scene {
   private collectCoin(c: Phaser.Physics.Arcade.Sprite) {
     const idx = c.getData("idx") as number;
     c.destroy();
-    store.set((s) => ({ coins: s.coins + 1, collected: [...s.collected, idx] }));
+    store.set((s) => ({ score: s.score + 1, collected: [...s.collected, idx] }));
     this.sfx("coin", 0.5);
     this.floatText("+1", "#ffe14d");
   }
@@ -750,9 +750,9 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** Back to the jeepney = a fresh run: coins, map coins and chests reset (badges stay). */
+  /** Back to the jeepney = a fresh run: score, map coins and chests reset (badges stay). */
   private respawn() {
-    store.set({ hearts: BASE_HEARTS, pos: null, coins: 0, collected: [], opened: [] });
+    store.set({ hearts: BASE_HEARTS, pos: null, score: 0, collected: [], opened: [] });
     this.scene.restart({ respawned: true });
   }
 

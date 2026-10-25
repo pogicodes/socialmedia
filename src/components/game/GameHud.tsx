@@ -109,13 +109,10 @@ export function GameHud({
               <Heart key={i} state={h} beat={critical && i === 0} />
             ))}
           </span>
-          <span className="font-pixel flex items-center gap-1 text-[10px]" aria-label={`${s.coins} coins`}>
-            <span
-              aria-hidden
-              className="inline-block size-4 [image-rendering:pixelated]"
-              style={{ backgroundImage: "url(/game/sprites/coin.png)", backgroundSize: "64px 16px" }}
-            />
-            {s.coins}
+          {/* min-w fits a 3-digit score so the card doesn't grow mid-run */}
+          <span className="font-pixel flex items-baseline gap-1 text-[10px]" aria-label={`${s.score} points`}>
+            <span aria-hidden className="text-[7px] text-yellow-300">PTS</span>
+            <span className="min-w-[3ch] text-left">{s.score}</span>
           </span>
         </button>
         <Stickers levels={levels} cleared={s.cleared} onOpen={onBadges} />

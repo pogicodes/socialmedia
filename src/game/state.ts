@@ -6,7 +6,7 @@ export const MAX_HEARTS = 4; // 4th = golden bonus heart (Facebook)
 
 export interface GameState {
   hearts: number;
-  coins: number;
+  score: number;
   cleared: PlatformId[];
   /** indices of collected map coins */
   collected: number[];
@@ -23,7 +23,7 @@ const HEALED_KEY = "pogi:healed";
 
 const fresh = (): GameState => ({
   hearts: BASE_HEARTS,
-  coins: 0,
+  score: 0,
   cleared: [],
   collected: [],
   pos: null,
@@ -39,7 +39,10 @@ const listeners = new Set<() => void>();
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) state = { ...fresh(), ...JSON.parse(raw) };
+    if (raw) {
+      const { coins, ...saved } = JSON.parse(raw);
+      state = { ...fresh(), score: coins ?? 0, ...saved }; // older saves tracked `coins`
+    }
   } catch {
     /* ignore */
   }
@@ -66,7 +69,7 @@ export const store = {
     persist();
     listeners.forEach((fn) => fn());
   },
-  /** Wipe all progress (hearts, coins, cleared worlds, position, unlocks, this session's heals). */
+  /** Wipe all progress (hearts, score, cleared worlds, position, unlocks, this session's heals). */
   reset() {
     state = { ...fresh(), introSeen: true };
     try {
@@ -121,9 +124,9 @@ export function engage(kind: Engagement, platform: PlatformId, contentId: string
   return after - before;
 }
 
-/** First engagement with a platform clears its building: +5 coins and a stamp. */
+/** First engagement with a platform clears its building: +5 points and a stamp. */
 export function clear(platform: PlatformId) {
   if (state.cleared.includes(platform)) return;
-  store.set((s) => ({ cleared: [...s.cleared, platform], coins: s.coins + 5 }));
+  store.set((s) => ({ cleared: [...s.cleared, platform], score: s.score + 5 }));
   bridge.emit("cleared", platform);
 }

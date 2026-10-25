@@ -42,14 +42,14 @@ No GitHub token. Only secret: `TEABLE_API_TOKEN` (read-only).
 - **World:** small top-down Philippine beach island (~20×30 tiles), coconut trees, jeepney spawn; camera follows Pogi; full-screen game viewport.
 - **Pogi:** shades, slick hair, 4-dir walk, idle hair-flex ("Ang pogi ko talaga").
 - **Controls:** floating joystick (4-dir snap, dead-zone) + quick-tap to walk/pathfind; desktop arrows/WASD + click-to-walk; Enter/Space interact. One-time hint "Drag to move · Tap to go".
-- **Doors:** walk up into a doorway (keyboard, joystick, or tap the building) → Pogi goes straight into the building's **room**, no button press. Inside, a bouncy action hint floats above Pogi ("OPEN TREASURE 2/5?"). Room: notice board (level card: stats + CTA), up to 6 treasure chests (one per latest video / post / repo, +1 coin on first open, content + CTA in a modal), exit mat to walk back out. `?level=` deep links straight into the room with the board open. Place names live in `site.config.ts` (Teable `Level name` is ignored).
+- **Doors:** walk up into a doorway (keyboard, joystick, or tap the building) → Pogi goes straight into the building's **room**, no button press. Inside, a bouncy action hint floats above Pogi ("OPEN TREASURE 2/5?"). Room: notice board (level card: stats + CTA), up to 6 treasure chests (one per latest video / post / repo, +1 point on first open, content + CTA in a modal), exit mat to walk back out. `?level=` deep links straight into the room with the board open. Place names live in `site.config.ts` (Teable `Level name` is ignored).
 - **Guide arrow:** bouncing arrow over the next uncleared building in channel order (screen-edge arrow when off screen), then the hidden-beach chest; inside rooms it points board → unopened chests → exit.
 - **Enemies (36):** lamok (zig-zag), ipis (sudden dashes); ~10 on the main island, 4–5 per islet. Slow, readable patrols. Doors are safe zones (~2 tiles). Auto-walk never stops on hit. 0.5s i-frames.
 - **Hearts:** 3 (4 with golden). Hit = −1 heart, knockback, "Aray!". Heal by content (table above); FB/YT/TikTok embeds use player APIs to measure ≥15s; embeds load only on tap.
 - **0 hearts → "CONTINUE?"** offering latest Facebook reel first (the "ad"). Watch 15s → revive in place, full hearts. Or **BACK TO THE JEEPNEY** right away (no countdown) → respawn at jeepney, cleared levels kept.
-- **Coins:** ~20 on the map (some near enemies); +5 and "★ CLEARED" stamp per building engaged. HUD: `❤️❤️❤️ 🪙 12 ★ 2/6` + **Follow all** button.
+- **Score:** ~20 coins on the map (some near enemies), 1 point each; +1 per room treasure; +5 and "★ CLEARED" stamp per building engaged. HUD: `❤️❤️❤️ PTS 12 ★ 2/6` + **Follow all** button.
 - **ISLAND COMPLETE!** (all 6 cleared): confetti, jeepney horn, "Salamat, idol!", unlocks hidden beach with owner message + newest project link (Teable `Secret`). Share-your-score button.
-- **Persistence:** `localStorage` (hearts, coins, cleared, position); "New game" in pause menu.
+- **Persistence:** `localStorage` (hearts, score, cleared, position); "New game" in pause menu.
 - **Copy:** mostly English UI + Taglish flavor lines ("Uy!", "Aray!", "Ayos!", "Tara, nood tayo!").
 - **Pogi's idle lines (priority order):** last heart → a heal tip every ~9s (even while walking), cycling the heal table; Pogi flashes red and the HUD blinks; next uncleared building in channel order with a direction arrow ("Tara sa Facebook Hall! ↑"); hidden beach once unlocked; only after everything (incl. chest) → dev/creator flavor lines ("Render 99%…", "Thumbnail muna bago code.").
 - **Sound:** pack SFX + chiptune, off by default, toggle remembered.
@@ -62,7 +62,7 @@ Auto quick view when: reduced motion (with "Play anyway"), no WebGL, very slow d
 ## Status
 
 - ✅ Step 1 — Quick view (Facebook-first, click-to-load embeds, stats/CTA above the fold).
-- ✅ Step 2 — Walkable island (Phaser 4): joystick + tap-to-walk + keyboard, doors → level cards, lamok/ipis, hearts, coins, ★ CLEARED, heal table, CONTINUE? screen, Follow all, menu, credits, Taglish lines, sound (off by default), auto quick view.
+- ✅ Step 2 — Walkable island (Phaser 4): joystick + tap-to-walk + keyboard, doors → level cards, lamok/ipis, hearts, score, ★ CLEARED, heal table, CONTINUE? screen, Follow all, menu, credits, Taglish lines, sound (off by default), auto quick view.
   - "Watched" = embed open & tab visible for 15s (FB/TikTok don't expose reliable progress without heavy SDKs).
 - ✅ Step 3 — ISLAND COMPLETE (confetti, "Salamat, idol!"), secret bridge to the hidden beach + chest → Teable `Secret` (`tblLdewX1xlberGLnUc`), share score (native share / Facebook / X / copy), OG image rendered from the island.
 - Map v4 (archipelago): main island holds the big three in one row — YouTube · Facebook · TikTok — facing the spawn beach; the jeepney drops Pogi a few steps below Facebook Hall, and the map ends just past the beach so the camera clamps and the start screen always shows the halls (Pogi also says "Tara sa Facebook Hall! ↑" on landing). Main street runs past all three doors to 3-wide bridges: Instagram (W), X (E); backyard road north to GitHub Dojo. Blog via Instagram (NW), Threads via X (NE); hidden beach (far E, past X) bridge appears on ISLAND COMPLETE. Roads everywhere (auto-walk prefers them); manual steering has corner assist. Custom 16×24 Pogi (jersey + tsinelas).
@@ -72,7 +72,7 @@ Auto quick view when: reduced motion (with "Play anyway"), no WebGL, very slow d
 1. **Quick view** — ship-able growth hub now (Facebook-first, embeds click-to-load).
 2. **Walkable island (Game V1)** — everything in Gameplay except Step 3 items.
 3. **Rewards** — ISLAND COMPLETE, hidden beach + `Secret` table, share score, custom OG.
-- **V2:** Kapre & Duwende, sari-sari store (spend coins on cosmetics), rice terraces, custom Pogi sprite of owner, more areas.
+- **V2:** Kapre & Duwende, sari-sari store (spend points on cosmetics), rice terraces, custom Pogi sprite of owner, more areas.
 
 ## Non-code cleanup
 
