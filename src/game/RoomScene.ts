@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import type { PlatformId } from "@/lib/types";
+import type { RoomId } from "@/lib/types";
 import { bridge, MAX_TREASURES } from "./bridge";
 import { GuideArrow, type GuideTarget } from "./guide";
 import { findPath } from "./pathfind";
@@ -26,7 +26,7 @@ const SLOTS = [
 ];
 
 export interface RoomData {
-  platform: PlatformId;
+  platform: RoomId;
   sfx: (key: string, volume?: number) => void;
   /** Deep link: open the notice board right away. */
   openBoard?: boolean;
@@ -45,7 +45,7 @@ const key = (x: number, y: number) => y * W + x;
 
 /** Inside a building: notice board (profile + CTA), treasure chests (latest content), exit mat. */
 export class RoomScene extends Phaser.Scene {
-  private platform!: PlatformId;
+  private platform!: RoomId;
   private sfx!: RoomData["sfx"];
   private player!: Phaser.Physics.Arcade.Sprite;
   private dir: Dir = "up";

@@ -57,6 +57,7 @@ const BUILDINGS = {
   github: [12, 0, 4, 3], // red-roof temple → Code Dojo
   website: [29, 0, 4, 3], // wooden house with signboard → Aklatan (blog)
   threads: [4, 0, 4, 3], // sand-plaster house → Tambayan (Threads)
+  about: [26, 0, 3, 3], // orange corner house → Bahay ni Pogi (about me, no quest)
 };
 await Promise.all([
   ...Object.entries(BUILDINGS).map(([id, [c, r, w, h]]) => crop(HOUSE, `buildings/${id}.png`, c, r, w, h)),
@@ -260,6 +261,8 @@ const SIGNS = {
   github: [icons.siGithub, "#8B5CF6"],
   website: [{ path: "M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" }, "#16A34A"],
   threads: [icons.siThreads, "#101010"],
+  // person (Material Design, Apache-2.0)
+  about: [{ path: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" }, "#EA580C"],
 };
 await Promise.all(
   Object.entries(SIGNS).map(([id, [icon, color]]) =>
@@ -654,6 +657,8 @@ const PLACE = {
   github: { x: 35, y: 8, door: 1 },
   website: { x: 6, y: 16, door: 1 },
   threads: { x: 56, y: 16, door: 1 },
+  // top of the main island, straight above Facebook Hall (a wider gap than between the big three)
+  about: { x: 31, y: 22, door: 1 },
 };
 const plazas = [];
 const occupied = new Uint8Array(W * H); // buildings, plazas, roads, bridges → no trees/decor
@@ -694,8 +699,8 @@ const free = (x, y) => inMap(x, y) && !blocked[idx(x, y)] && !occupied[idx(x, y)
 const trees = [
   // main
   ["coconut", 21, 38], ["coconut", 25, 38], ["coconut", 28, 38], ["coconut", 39, 38], ["coconut", 42, 38], ["coconut", 45, 38],
-  ["coconut", 20, 22], ["coconut", 46, 22], ["tree", 21, 23], ["tree", 45, 23], ["tree", 29, 29], ["tree", 33, 23],
-  ["bamboo", 30, 32], ["bamboo", 35, 32], ["rock", 42, 30], ["boulder", 25, 28],
+  ["coconut", 20, 22], ["coconut", 46, 22], ["tree", 21, 23], ["tree", 45, 23], ["tree", 29, 29],
+  ["bamboo", 30, 23], ["bamboo", 34, 23], ["bamboo", 30, 32], ["bamboo", 35, 32], ["rock", 42, 30], ["boulder", 25, 28],
   // instagram islet
   ["coconut", 5, 38], ["coconut", 14, 38], ["coconut", 5, 29], ["tree", 14, 31], ["rock", 6, 36],
   // x islet
@@ -731,7 +736,7 @@ for (let i = 0; i < 260; i++) {
 
 // Coins
 const COINS = [
-  [22, 30], [44, 30], [36, 24], [26, 26], [40, 26], [33, 25], [28, 37], [45, 37], [24, 36], // main
+  [22, 30], [44, 30], [36, 24], [26, 26], [40, 26], [29, 25], [28, 37], [45, 37], [24, 36], // main
   [17, 36], [49, 36], [36, 19], [54, 26], [12, 26], // bridges
   [7, 30], [13, 33], // instagram
   [54, 31], [60, 35], // x
@@ -748,7 +753,7 @@ for (const [x, y] of COINS) {
 // Enemies — patrol areas kept off bridges and ≥2 tiles from doors
 const ENEMIES = [
   // main (12) — none on the spawn beach in front of the hall
-  ["lamok", 21, 22, 3, 2], ["lamok", 43, 22, 3, 2], ["ipis", 24, 24, 3, 2], ["ipis", 29, 23, 2, 2], ["lamok", 33, 27, 3, 2], ["ipis", 37, 23, 2, 2],
+  ["lamok", 21, 22, 3, 2], ["lamok", 43, 22, 3, 2], ["ipis", 24, 24, 3, 2], ["ipis", 27, 22, 2, 2], ["lamok", 33, 27, 3, 2], ["ipis", 37, 23, 2, 2],
   ["lamok", 24, 29, 3, 2], ["ipis", 42, 28, 2, 2], ["ipis", 21, 37, 2, 2], ["lamok", 42, 37, 3, 1], ["lamok", 29, 27, 2, 2], ["ipis", 45, 31, 1, 3],
   // instagram (5)
   ["lamok", 5, 29, 2, 2], ["ipis", 13, 30, 2, 2], ["lamok", 5, 36, 2, 2], ["ipis", 10, 37, 3, 1], ["lamok", 6, 32, 1, 2],

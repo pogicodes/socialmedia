@@ -8,6 +8,9 @@ export type PlatformId =
   | "website"
   | "threads";
 
+/** A building you can walk into: every platform, plus the about-me house (no quest, no badge). */
+export type RoomId = PlatformId | "about";
+
 export interface LevelStats {
   followers?: number;
   posts?: number;

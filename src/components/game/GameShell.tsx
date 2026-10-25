@@ -6,6 +6,7 @@ import { EngagementProvider, type EngagementApi } from "../engagement";
 import { IntroDialog } from "../IntroDialog";
 import { LevelCard, Treasure, treasureTitles } from "../LevelCards";
 import { LevelSheet } from "../LevelSheet";
+import { AboutBoard, AboutIsland, AboutTreasure } from "./About";
 import { ActionHint } from "./ActionHint";
 import { ContinueScreen } from "./ContinueScreen";
 import { IslandComplete, ShareButtons } from "./IslandComplete";
@@ -15,8 +16,8 @@ import { FollowAll, Modal } from "./Modals";
 import { Badges, Quest } from "./Quest";
 import { bridge, MAX_TREASURES } from "@/game/bridge";
 import { engage, store } from "@/game/state";
-import type { HubData, PlatformId } from "@/lib/types";
-import { site } from "@/site.config";
+import type { HubData, RoomId } from "@/lib/types";
+import { about, aboutTreasures, site } from "@/site.config";
 
 type Mode = "quick" | "game";
 const MODE_KEY = "pogi:mode";
@@ -83,8 +84,8 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
   const [progress, setProgress] = useState(0);
   const [ready, setReady] = useState(false);
   const [prompt, setPrompt] = useState<string | null>(null);
-  const [open, setOpen] = useState<PlatformId | null>(null);
-  const [item, setItem] = useState<{ platform: PlatformId; index: number } | null>(null);
+  const [open, setOpen] = useState<RoomId | null>(null);
+  const [item, setItem] = useState<{ platform: RoomId; index: number } | null>(null);
   const [dead, setDead] = useState(false);
   const [modal, setModal] = useState<"follow" | "badges" | "about" | "menu" | "credits" | "secret" | "share" | "reset" | null>(null);
   const [complete, setComplete] = useState(false);
@@ -134,6 +135,9 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
     bridge.meta.order = levels.map((l) => l.id);
     bridge.meta.colors = Object.fromEntries(levels.map((l) => [l.id, l.color]));
     bridge.meta.rooms = Object.fromEntries(levels.map((l) => [l.id, treasureTitles(l, data).slice(0, MAX_TREASURES)]));
+    bridge.meta.names.about = about.name;
+    bridge.meta.colors.about = about.color;
+    bridge.meta.rooms.about = [...aboutTreasures];
     if (new URLSearchParams(location.search).has("debug"))
       (window as unknown as { __pogi: unknown }).__pogi = { bridge, store };
     import("@/game/createGame")
@@ -162,8 +166,8 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync persisted pref once the engine is up
     setSoundOn(on);
     bridge.emit("sound", on);
-    const id = new URLSearchParams(location.search).get("level") as PlatformId | null;
-    if (id && levels.some((l) => l.id === id)) bridge.emit("enterRoom", id);
+    const id = new URLSearchParams(location.search).get("level") as RoomId | null;
+    if (id && (id === "about" || levels.some((l) => l.id === id))) bridge.emit("enterRoom", id);
     else if (!store.get().introSeen) setIntro(true);
   }, [ready, levels]);
 
@@ -310,6 +314,18 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
         </Modal>
       )}
 
+      {open === "about" && (
+        <Modal title={`🏠 ${about.name.toUpperCase()}`} onClose={closeLevel}>
+          <AboutBoard />
+        </Modal>
+      )}
+
+      {item?.platform === "about" && (
+        <Modal title={`🎁 ${aboutTreasures[item.index]?.toUpperCase() ?? "TREASURE"}`} onClose={closeItem}>
+          <AboutTreasure index={item.index} />
+        </Modal>
+      )}
+
       {dead && <ContinueScreen data={data} onGiveUp={giveUp} />}
 
       {complete && !open && (
@@ -357,33 +373,7 @@ function Game({ data, onQuickView, onFail }: { data: HubData; onQuickView: () =>
       {modal === "follow" && <FollowAll levels={levels} onClose={() => pauseFor(null)} />}
       {modal === "about" && (
         <Modal title="ABOUT POGI ISLAND" onClose={() => pauseFor(null)}>
-          <div className="space-y-3 text-sm leading-relaxed text-zinc-800">
-            <p>
-              Pogi Island is a small game and link hub made by{" "}
-              <a className="underline" href={site.author.url} target="_blank" rel="noopener noreferrer">
-                {site.author.name}
-              </a>{" "}
-              ({site.brand}), a software engineer born in the Philippines, now living and working in Sweden,
-              who makes coding tutorials and dev vlogs.
-            </p>
-            <p>
-              It is open source. Read the code, report a bug, or fork it and build your own island.
-            </p>
-            <a
-              href={site.repoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track("outbound", { platform: "github", source: "about" })}
-              className="pixel-btn font-pixel block bg-zinc-900 py-3 text-center text-[10px] text-white"
-            >
-              VIEW SOURCE ON GITHUB ▶
-            </a>
-            <p className="text-zinc-600">
-              Built with Next.js, React, Phaser and Tailwind. Videos, posts and repos are pulled live from each
-              platform. Your progress is saved only in this browser — no account needed.
-            </p>
-            <p className="text-zinc-600">Art &amp; audio credits are in Menu → Credits.</p>
-          </div>
+          <AboutIsland />
         </Modal>
       )}
       {modal === "badges" && (

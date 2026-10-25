@@ -1,5 +1,5 @@
 import * as Phaser from "phaser";
-import type { PlatformId } from "@/lib/types";
+import type { PlatformId, RoomId } from "@/lib/types";
 import { bridge } from "./bridge";
 import { GuideArrow, type GuideTarget } from "./guide";
 import { findPath } from "./pathfind";
@@ -44,7 +44,7 @@ const CREATOR_LINES = [
 ];
 
 interface Door {
-  platform: PlatformId;
+  platform: RoomId;
   tx: number;
   ty: number;
   zone: Phaser.Geom.Rectangle;
@@ -75,8 +75,8 @@ export class WorldScene extends Phaser.Scene {
   private doors: Door[] = [];
   private enemies: Enemy[] = [];
   private path: { x: number; y: number }[] = [];
-  private pathTarget: PlatformId | "chest" | null = null;
-  private currentDoor: PlatformId | null = null;
+  private pathTarget: RoomId | "chest" | null = null;
+  private currentDoor: RoomId | null = null;
   private invincibleUntil = 0;
   private knockUntil = 0;
   private paused = false;
@@ -128,7 +128,7 @@ export class WorldScene extends Phaser.Scene {
     this.load.spritesheet("coin", `${BASE}/sprites/coin.png`, { frameWidth: 10, frameHeight: 10 });
     this.load.spritesheet("smoke", `${BASE}/sprites/smoke.png`, { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet("ripple", `${BASE}/sprites/ripple.png`, { frameWidth: 16, frameHeight: 16 });
-    for (const id of ["facebook", "youtube", "tiktok", "instagram", "x", "github", "website", "threads"]) {
+    for (const id of ["facebook", "youtube", "tiktok", "instagram", "x", "github", "website", "threads", "about"]) {
       this.load.image(`building-${id}`, `${BASE}/buildings/${id}.png`);
       this.load.image(`sign-${id}`, `${BASE}/sprites/sign-${id}.png`);
     }
@@ -185,7 +185,7 @@ export class WorldScene extends Phaser.Scene {
       const y = o.y ?? 0;
       switch (o.type) {
         case "building": {
-          const id = prop(o, "platform") as PlatformId;
+          const id = prop(o, "platform") as RoomId;
           const img = this.add.image(x, y, `building-${id}`).setOrigin(0, 0).setDepth(y + (o.height ?? 0));
           const dx = prop(o, "doorX") as number;
           const dy = prop(o, "doorY") as number;
@@ -264,7 +264,8 @@ export class WorldScene extends Phaser.Scene {
       this.physics.add.overlap(this.player, e.sprite, () => this.hurt(e.sprite));
 
     for (const id of store.get().cleared) this.stamp(id, false);
-    if (this.doors.every((d) => store.get().cleared.includes(d.platform))) this.unlock(false);
+    // the about-me house has no quest, so it never counts toward unlocking the hidden beach
+    if (this.doors.every((d) => d.platform === "about" || store.get().cleared.includes(d.platform))) this.unlock(false);
 
     // ---------------------------------------------------------- camera
     const cam = this.cameras.main;
@@ -274,7 +275,7 @@ export class WorldScene extends Phaser.Scene {
     this.fitZoom();
     this.scale.on("resize", this.fitZoom, this);
     this.arrow = new GuideArrow(this);
-    this.events.on("wake", (_: unknown, data: { platform: PlatformId }) => this.exitRoom(data.platform));
+    this.events.on("wake", (_: unknown, data: { platform: RoomId }) => this.exitRoom(data.platform));
 
     // ---------------------------------------------------------- input
     const kb = this.input.keyboard!;
@@ -549,7 +550,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Deep link: stand at the door, go in and open the notice board. */
-  private goto(id: PlatformId) {
+  private goto(id: RoomId) {
     const door = this.doors.find((d) => d.platform === id);
     if (!door || !this.sys.isActive()) return;
     if (this.arriving) {
@@ -560,7 +561,7 @@ export class WorldScene extends Phaser.Scene {
     this.enterRoom(id, true);
   }
 
-  private enterRoom(id: PlatformId, openBoard = false) {
+  private enterRoom(id: RoomId, openBoard = false) {
     this.path = [];
     this.pathTarget = null;
     this.player.setVelocity(0, 0);
@@ -578,7 +579,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Back outside: one tile below the door, facing out. */
-  private exitRoom(id: PlatformId) {
+  private exitRoom(id: RoomId) {
     const door = this.doors.find((d) => d.platform === id);
     if (door) {
       const ty = this.isBlocked(door.tx, door.ty + 1) ? door.ty : door.ty + 1;

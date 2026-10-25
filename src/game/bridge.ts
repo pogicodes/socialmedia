@@ -1,4 +1,4 @@
-import type { PlatformId } from "@/lib/types";
+import type { PlatformId, RoomId } from "@/lib/types";
 
 /** Tiny typed event bus shared by Phaser (game) and React (overlays). */
 type Events = {
@@ -8,9 +8,9 @@ type Events = {
   /** Action-hint label for whatever Pogi is standing at (door, chest, treasure), or null. */
   prompt: string | null;
   /** Entered (id) or left (null) a building's room. */
-  room: PlatformId | null;
+  room: RoomId | null;
   /** Opened something inside a room: index into meta.rooms[platform], or -1 for the notice board. */
-  item: { platform: PlatformId; index: number };
+  item: { platform: RoomId; index: number };
   dead: void;
   secret: void;
   // React → Phaser
@@ -21,7 +21,7 @@ type Events = {
   revive: void;
   newgame: void;
   sound: boolean;
-  enterRoom: PlatformId;
+  enterRoom: RoomId;
   complete: void;
   gotoSecret: void;
   // both
@@ -53,9 +53,9 @@ export const bridge = {
    * colors, and each room's treasure titles (videos / posts / repos).
    */
   meta: {
-    names: {} as Partial<Record<PlatformId, string>>,
+    names: {} as Partial<Record<RoomId, string>>,
     order: [] as PlatformId[],
-    colors: {} as Partial<Record<PlatformId, string>>,
-    rooms: {} as Partial<Record<PlatformId, string[]>>,
+    colors: {} as Partial<Record<RoomId, string>>,
+    rooms: {} as Partial<Record<RoomId, string[]>>,
   },
 };

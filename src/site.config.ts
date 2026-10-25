@@ -168,3 +168,38 @@ export const fallbackLevels: FallbackLevel[] = [
     order: 8,
   },
 ];
+
+/**
+ * "Bahay ni Pogi": the about-me house at the top of the main island. Not a world:
+ * no quest, no badge, not needed for ISLAND COMPLETE. The board is about this site,
+ * the chests are the resume (hand-copied from carlogino.com/resume).
+ */
+export const about = {
+  name: "Bahay ni Pogi",
+  color: "#EA580C",
+  url: "https://carlogino.com",
+  work: [
+    { company: "Tre", role: "Senior Full Stack Developer", dates: "Jun 2023 – Present" },
+    { company: "Devoteam Creative Tech", role: "Senior Full Stack Developer", dates: "Aug 2022 – May 2023" },
+    { company: "NE Digital", role: "Senior Software Engineer", dates: "Sep 2021 – Jul 2022" },
+    { company: "Development Bank of Singapore", role: "UI Java Full Stack Developer", dates: "Mar 2019 – Sep 2021" },
+    { company: "Capgemini", role: "Associate Consultant", dates: "Sep 2017 – Nov 2018" },
+    { company: "Nokia", role: "Research and Development Engineer", dates: "Aug 2014 – Sep 2017" },
+  ],
+  education: [
+    { school: "AMA Computer College", degree: "BS Computer Engineering", dates: "Jun 2010 – Mar 2014" },
+    { school: "Batangas State University", degree: "BS General Engineering", dates: "Jun 2007 – Mar 2010" },
+    { school: "Our Lady of Caysasay Academy", degree: "High School", dates: "Jun 2004 – Mar 2007" },
+  ],
+  skills: [
+    { group: "AI", items: ["AI development", "Claude", "Codex", "Copilot"] },
+    { group: "Frontend", items: ["React", "Next.js", "TypeScript", "Tailwind", "Redux", "React Native", "GraphQL"] },
+    { group: "Backend", items: ["Node.js", "Java"] },
+    { group: "Testing", items: ["Playwright", "K6"] },
+    { group: "Hosting", items: ["Vercel", "AWS", "Heroku"] },
+    { group: "Tools", items: ["GitHub", "VS Code"] },
+  ],
+};
+
+/** Chest order in the about house; `AboutTreasure` indexes the same way. */
+export const aboutTreasures = ["Work Experience", "Education", "Skills"] as const;

@@ -66,6 +66,7 @@ Auto quick view when: reduced motion (with "Play anyway"), no WebGL, very slow d
   - "Watched" = embed open & tab visible for 15s (FB/TikTok don't expose reliable progress without heavy SDKs).
 - ✅ Step 3 — ISLAND COMPLETE (confetti, "Salamat, idol!"), secret bridge to the hidden beach + chest → Teable `Secret` (`tblLdewX1xlberGLnUc`), share score (native share / Facebook / X / copy), OG image rendered from the island.
 - Map v4 (archipelago): main island holds the big three in one row — YouTube · Facebook · TikTok — facing the spawn beach; the jeepney drops Pogi a few steps below Facebook Hall, and the map ends just past the beach so the camera clamps and the start screen always shows the halls (Pogi also says "Tara sa Facebook Hall! ↑" on landing). Main street runs past all three doors to 3-wide bridges: Instagram (W), X (E); backyard road north to GitHub Dojo. Blog via Instagram (NW), Threads via X (NE); hidden beach (far E, past X) bridge appears on ISLAND COMPLETE. Roads everywhere (auto-walk prefers them); manual steering has corner assist. Custom 16×24 Pogi (jersey + tsinelas).
+- **Bahay ni Pogi** (about-me house): top of the main island, straight above Facebook Hall on the backyard lane. Not a world: no quest, badge, stamp or guide arrow, and not needed for ISLAND COMPLETE. Board = about Pogi Island + link to carlogino.com; 3 chests = work experience, education, skills (hardcoded `about` in `src/site.config.ts`, copied from carlogino.com/resume). `?level=about` deep-links in.
 
 ## Phasing
 
