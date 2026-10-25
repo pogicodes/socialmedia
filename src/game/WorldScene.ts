@@ -250,8 +250,11 @@ export class WorldScene extends Phaser.Scene {
     }
 
     // ---------------------------------------------------------- player
-    const atSpawn = !store.get().pos;
-    const pos = store.get().pos ?? { x: this.spawn.x, y: this.spawn.y - FEET };
+    // a save from an older map layout can land in the sea or inside a building → back to the jeepney
+    const saved = store.get().pos;
+    const valid = saved && !this.collision.hasTileAtWorldXY(saved.x, saved.y + FEET) ? saved : null;
+    const atSpawn = !valid;
+    const pos = valid ?? { x: this.spawn.x, y: this.spawn.y - FEET };
     this.player = this.physics.add.sprite(pos.x, pos.y, "pogi", 0);
     (this.player.body as Phaser.Physics.Arcade.Body).setSize(10, 6).setOffset(3, 18);
     this.player.setCollideWorldBounds(true);

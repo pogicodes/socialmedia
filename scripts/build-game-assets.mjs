@@ -504,8 +504,8 @@ await asciiGrid(
 }
 
 // ---------------------------------------------------------------- map (Tiled JSON)
-const W = 69;
-const H = 50;
+const W = 67;
+const H = 53;
 const TILESETS = [
   { name: "water", image: "../tiles/water.png", w: 448, h: 272 },
   { name: "field", image: "../tiles/field.png", w: 80, h: 240 },
@@ -549,15 +549,13 @@ const walk = (x0, y0, x1, y1, v = 0) => {
 
 // ---- islands: [sand rect, grass rect]
 const ISLANDS = {
-  main: [[20, 26, 37, 46], [21, 27, 36, 41]],
-  youtube: [[5, 24, 16, 35], [6, 25, 15, 34]],
-  tiktok: [[41, 24, 52, 35], [42, 25, 51, 34]],
-  instagram: [[5, 8, 16, 19], [6, 9, 15, 18]],
-  x: [[41, 8, 52, 19], [42, 9, 51, 18]],
-  github: [[21, 9, 34, 21], [22, 10, 33, 20]],
-  website: [[5, 38, 16, 48], [6, 39, 15, 47]],
-  threads: [[56, 8, 67, 19], [57, 9, 66, 18]],
-  hidden: [[41, 38, 50, 46], null],
+  main: [[19, 21, 47, 46], [20, 22, 46, 40]], // YouTube · Facebook · TikTok in one row
+  instagram: [[4, 23, 15, 34], [5, 24, 14, 33]],
+  x: [[51, 23, 62, 34], [52, 24, 61, 33]],
+  github: [[29, 5, 43, 17], [30, 6, 42, 16]],
+  website: [[4, 38, 15, 48], [5, 39, 14, 47]],
+  threads: [[51, 8, 62, 19], [52, 9, 61, 18]],
+  hidden: [[51, 38, 60, 46], null],
 };
 for (const [sand, grass] of Object.values(ISLANDS)) {
   rect9(ground, ...sand, "field", 0, 0);
@@ -565,10 +563,10 @@ for (const [sand, grass] of Object.values(ISLANDS)) {
   walk(...sand);
 }
 walk(...ISLANDS.hidden[0], 1); // reachable only after unlock (bridge) — set walkable below
-walk(42, 39, 49, 45); // inner hidden beach
+walk(52, 39, 59, 45); // inner hidden beach
 
 // Pond (main island)
-const pond = [34, 33, 35, 35];
+const pond = [40, 34, 41, 36];
 rect9(ground, ...pond, "water", 0, 6);
 walk(...pond, 1);
 
@@ -582,14 +580,12 @@ const vBridge = (x0, y0, y1, secret = false) => {
 const hBridge = (x0, x1, y0, secret = false) => {
   for (let x = x0 - 1; x <= x1 + 1; x++) for (let i = 0; i < 3; i++) bridges.push({ x, y: y0 + i, tile: [3 + i, 1], secret });
 };
-vBridge(27, 22, 25); // main ↔ GitHub islet (north)
-hBridge(17, 19, 29); // main ↔ YouTube islet (west)
-hBridge(38, 40, 29); // main ↔ TikTok islet (east)
-vBridge(12, 20, 23); // YouTube ↔ Instagram islet
-vBridge(42, 20, 23); // TikTok ↔ X islet
-hBridge(17, 19, 42); // main ↔ blog islet (south-west)
-hBridge(53, 55, 13); // X ↔ Threads islet (east)
-hBridge(38, 40, 41, true); // main ↔ hidden beach (locked)
+vBridge(35, 18, 20); // main ↔ GitHub islet (north)
+hBridge(16, 18, 30); // main ↔ Instagram islet (west)
+hBridge(48, 50, 30); // main ↔ X islet (east)
+vBridge(53, 20, 22); // X ↔ Threads islet (north-east)
+hBridge(16, 18, 42); // main ↔ blog islet (south-west)
+hBridge(48, 50, 42, true); // main ↔ hidden beach (locked)
 
 // ---- roads (1 wide, orthogonal segments)
 const road = new Uint8Array(W * H);
@@ -598,34 +594,29 @@ const seg = (x0, y0, x1, y1) => {
     for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) road[idx(x, y)] = 1;
 };
 // main island
-seg(28, 38, 28, 44); // spawn → Barangay Hall
-seg(24, 39, 32, 39); // loop bottom
-seg(24, 30, 24, 39); // loop west
-seg(32, 30, 32, 42); // loop east (+ to hidden beach)
-seg(20, 30, 37, 30); // west bridge ↔ east bridge
-seg(28, 26, 28, 30); // north to GitHub bridge
-seg(33, 42, 37, 42); // → hidden beach bridge
-seg(20, 43, 27, 43); // spawn beach → blog bridge
+seg(20, 31, 46, 31); // main street: west bridge ↔ east bridge, past all three doors
+seg(32, 30, 32, 44); // spawn → Barangay Hall
+seg(26, 30, 26, 31); // → Sinehan
+seg(39, 30, 39, 31); // → Videoke Stage
+seg(36, 22, 36, 31); // north to GitHub bridge (between the hall and the stage)
+seg(22, 31, 22, 43); // loop west
+seg(44, 31, 44, 43); // loop east (+ to hidden beach)
+seg(20, 43, 31, 43); // spawn beach → blog bridge
+seg(45, 43, 47, 43); // → hidden beach bridge
 // GitHub islet
-seg(28, 17, 28, 21);
-// YouTube islet
-seg(11, 30, 16, 30);
-seg(13, 24, 13, 30);
+seg(36, 13, 36, 16);
 // Instagram islet
-seg(13, 14, 13, 19);
-// TikTok islet
-seg(41, 30, 44, 30);
-seg(43, 24, 43, 30);
+seg(9, 31, 14, 31);
 // X islet
-seg(43, 14, 43, 19);
-seg(44, 14, 45, 14);
-seg(49, 14, 52, 14); // → Threads bridge
+seg(52, 31, 57, 31);
+seg(54, 24, 54, 30); // → Threads bridge
 // Threads islet
-seg(56, 14, 60, 14);
+seg(54, 16, 54, 18);
+seg(55, 16, 57, 16);
 // blog islet
-seg(10, 43, 16, 43);
+seg(9, 43, 14, 43);
 // hidden beach
-seg(41, 42, 43, 42);
+seg(51, 43, 53, 43);
 
 for (const b of bridges) if (!b.secret) road[idx(b.x, b.y)] = 2;
 for (let i = 0; i < W * H; i++) if (road[i]) blocked[i] = 0;
@@ -655,14 +646,15 @@ const obj = (o) =>
 
 // Buildings: top-left tile + door column offset (door is on the bottom row)
 const PLACE = {
-  facebook: { x: 27, y: 33, door: 1 }, // main island, right in front of spawn
-  youtube: { x: 8, y: 26, door: 1 },
-  tiktok: { x: 45, y: 26, door: 1 },
-  instagram: { x: 10, y: 10, door: 1 },
-  x: { x: 46, y: 10, door: 1 },
-  github: { x: 27, y: 12, door: 1 },
-  website: { x: 7, y: 40, door: 1 },
-  threads: { x: 61, y: 11, door: 1 },
+  // main island: the big three side by side, 3-tile gaps, Facebook in the middle straight up from spawn
+  youtube: { x: 25, y: 25, door: 1 },
+  facebook: { x: 31, y: 25, door: 1 },
+  tiktok: { x: 38, y: 25, door: 1 },
+  instagram: { x: 8, y: 26, door: 1 },
+  x: { x: 56, y: 26, door: 1 },
+  github: { x: 35, y: 8, door: 1 },
+  website: { x: 6, y: 40, door: 1 },
+  threads: { x: 56, y: 11, door: 1 },
 };
 const plazas = [];
 const occupied = new Uint8Array(W * H); // buildings, plazas, roads, bridges → no trees/decor
@@ -685,42 +677,38 @@ for (const [id, pl] of Object.entries(PLACE)) {
 for (let i = 0; i < W * H; i++) if (road[i] || isBridge(i % W, Math.floor(i / W))) occupied[i] = 1;
 
 // Spawn + jeepney (main beach)
-obj({ name: "spawn", type: "spawn", x: 28 * T + 8, y: 44 * T + 8 });
-obj({ name: "jeepney", type: "jeepney", x: 30 * T, y: 43 * T, width: 48, height: 32 });
-walk(30, 44, 32, 44, 1);
-for (let x = 30; x <= 32; x++) for (let y = 43; y <= 44; y++) occupied[idx(x, y)] = 1;
+obj({ name: "spawn", type: "spawn", x: 32 * T + 8, y: 44 * T + 8 });
+obj({ name: "jeepney", type: "jeepney", x: 34 * T, y: 43 * T, width: 48, height: 32 });
+walk(34, 44, 36, 44, 1);
+for (let x = 34; x <= 36; x++) for (let y = 43; y <= 44; y++) occupied[idx(x, y)] = 1;
 
 // Hidden beach: chest + locked bridge
-obj({ name: "chest", type: "chest", x: 45 * T + 8, y: 42 * T + 8 });
-walk(45, 42, 45, 42, 1);
-occupied[idx(45, 42)] = 1;
+obj({ name: "chest", type: "chest", x: 55 * T + 8, y: 42 * T + 8 });
+walk(55, 42, 55, 42, 1);
+occupied[idx(55, 42)] = 1;
 const secretTiles = bridges.filter((b) => b.secret).map((b) => [b.x, b.y]);
-obj({ name: "secret-bridge", type: "secret-bridge", x: 38 * T, y: 41 * T, width: 3 * T, height: 3 * T, properties: { tiles: JSON.stringify(secretTiles) } });
+obj({ name: "secret-bridge", type: "secret-bridge", x: 48 * T, y: 42 * T, width: 3 * T, height: 3 * T, properties: { tiles: JSON.stringify(secretTiles) } });
 
 const free = (x, y) => inMap(x, y) && !blocked[idx(x, y)] && !occupied[idx(x, y)];
 
 // Trees & rocks (blocked at base tile)
 const trees = [
   // main
-  ["coconut", 21, 44], ["coconut", 23, 45], ["coconut", 26, 45], ["coconut", 34, 44], ["coconut", 36, 45],
-  ["coconut", 21, 27], ["coconut", 36, 27], ["tree", 22, 28], ["tree", 35, 28],
-  ["bamboo", 26, 34], ["bamboo", 31, 34], ["rock", 35, 38], ["boulder", 21, 37],
-  // youtube islet
-  ["coconut", 6, 34], ["coconut", 15, 34], ["coconut", 6, 25], ["tree", 15, 26], ["rock", 7, 32],
-  // tiktok islet
-  ["coconut", 51, 34], ["coconut", 42, 34], ["coconut", 51, 25], ["tree", 50, 32], ["rock", 46, 33],
+  ["coconut", 21, 44], ["coconut", 24, 45], ["coconut", 28, 45], ["coconut", 38, 45], ["coconut", 41, 44], ["coconut", 45, 45],
+  ["coconut", 20, 22], ["coconut", 46, 22], ["tree", 21, 23], ["tree", 45, 23],
+  ["bamboo", 30, 26], ["bamboo", 35, 26], ["rock", 42, 38], ["boulder", 24, 36], ["tree", 28, 38], ["tree", 38, 35],
   // instagram islet
-  ["coconut", 6, 18], ["coconut", 15, 18], ["coconut", 6, 9], ["tree", 14, 10], ["rock", 8, 16],
+  ["coconut", 5, 33], ["coconut", 14, 33], ["coconut", 5, 24], ["tree", 13, 25], ["rock", 7, 31],
   // x islet
-  ["coconut", 42, 18], ["coconut", 51, 18], ["coconut", 51, 9], ["tree", 42, 10], ["rock", 49, 17],
+  ["coconut", 52, 33], ["coconut", 61, 33], ["coconut", 61, 24], ["tree", 52, 25], ["rock", 59, 32],
   // github islet (dojo garden)
-  ["coconut", 22, 20], ["coconut", 33, 20], ["coconut", 22, 10], ["coconut", 33, 10], ["bamboo", 25, 13], ["bamboo", 25, 14], ["bamboo", 32, 13], ["bamboo", 32, 14],
+  ["coconut", 30, 16], ["coconut", 42, 16], ["coconut", 30, 6], ["coconut", 42, 6], ["bamboo", 33, 9], ["bamboo", 33, 10], ["bamboo", 40, 9], ["bamboo", 40, 10],
   // blog islet
-  ["coconut", 6, 47], ["coconut", 15, 47], ["coconut", 6, 39], ["tree", 14, 40], ["rock", 13, 46],
+  ["coconut", 5, 47], ["coconut", 14, 47], ["coconut", 5, 39], ["tree", 13, 40], ["rock", 12, 46],
   // threads islet
-  ["coconut", 57, 18], ["coconut", 66, 18], ["coconut", 66, 9], ["tree", 57, 10], ["rock", 64, 17],
+  ["coconut", 52, 18], ["coconut", 61, 18], ["coconut", 61, 9], ["tree", 52, 10], ["rock", 59, 17],
   // hidden beach
-  ["coconut", 49, 39], ["coconut", 42, 45], ["coconut", 49, 45], ["rock", 47, 40],
+  ["coconut", 59, 39], ["coconut", 52, 45], ["coconut", 59, 45], ["rock", 57, 40],
 ];
 for (const [kind, tx, ty] of trees) {
   if (!free(tx, ty)) throw new Error(`tree ${kind} not on free tile ${tx},${ty}`);
@@ -742,18 +730,16 @@ for (let i = 0; i < 260; i++) {
   if (onGrass(x, y) && free(x, y) && !detail[idx(x, y)] && rnd() < 0.55) set(detail, x, y, DECOR[Math.floor(rnd() * DECOR.length)]);
 }
 
-// Coins (20)
+// Coins
 const COINS = [
-  [28, 40], [22, 30], [35, 30], [24, 36], [28, 28], [33, 37], // main
-  [18, 30], [39, 30], [28, 23], [13, 22], [43, 22], [18, 43], // bridges
-  [7, 31], [11, 33], // youtube
-  [49, 32], [44, 33], // tiktok
-  [8, 12], [14, 16], // instagram
-  [44, 11], [49, 16], // x
-  [24, 17], [31, 17], [28, 11], // github
-  [12, 45], [7, 46], // blog
-  [44, 44], // hidden beach
-  [58, 16], [65, 13], [54, 14], // threads islet + bridge
+  [32, 38], [22, 35], [44, 35], [29, 23], [36, 24], [27, 37], [40, 33], [25, 43], [46, 43], // main
+  [17, 31], [49, 31], [36, 19], [54, 21], [17, 43], // bridges
+  [7, 27], [13, 31], // instagram
+  [54, 26], [59, 31], // x
+  [53, 14], [60, 12], // threads
+  [32, 13], [40, 13], [36, 7], // github
+  [11, 45], [6, 46], // blog
+  [54, 44], // hidden beach
 ];
 for (const [x, y] of COINS) {
   if (blocked[idx(x, y)]) throw new Error(`coin on blocked tile ${x},${y}`);
@@ -762,23 +748,19 @@ for (const [x, y] of COINS) {
 
 // Enemies — patrol areas kept off bridges and ≥2 tiles from doors
 const ENEMIES = [
-  // main (10)
-  ["lamok", 21, 27, 3, 2], ["lamok", 33, 27, 3, 2], ["ipis", 25, 31, 2, 3], ["ipis", 30, 31, 2, 1], ["lamok", 21, 35, 2, 2],
-  ["ipis", 33, 38, 3, 2], ["lamok", 25, 40, 2, 2], ["ipis", 29, 40, 2, 2], ["lamok", 33, 40, 3, 1], ["ipis", 21, 41, 3, 2],
-  // youtube (4)
-  ["lamok", 12, 25, 3, 2], ["ipis", 6, 30, 2, 2], ["ipis", 12, 32, 3, 2], ["lamok", 7, 33, 3, 1],
-  // instagram (4)
-  ["lamok", 6, 10, 2, 2], ["ipis", 14, 10, 2, 2], ["lamok", 7, 16, 3, 2], ["ipis", 11, 17, 2, 1],
-  // x (4)
-  ["lamok", 42, 9, 3, 2], ["ipis", 50, 10, 2, 2], ["lamok", 48, 16, 3, 2], ["ipis", 42, 16, 2, 2],
-  // tiktok (4)
-  ["lamok", 49, 24 + 1, 3, 2], ["ipis", 42, 25, 2, 2], ["lamok", 49, 32, 3, 2], ["ipis", 43, 32, 2, 2],
+  // main (12)
+  ["lamok", 21, 22, 3, 2], ["lamok", 43, 22, 3, 2], ["ipis", 24, 33, 3, 2], ["ipis", 29, 35, 2, 2], ["lamok", 34, 33, 3, 2], ["ipis", 37, 37, 2, 2],
+  ["lamok", 24, 38, 3, 2], ["ipis", 28, 41, 2, 1], ["lamok", 39, 40, 3, 2], ["ipis", 21, 40, 2, 2], ["lamok", 41, 33, 2, 2], ["ipis", 46, 36, 1, 3],
+  // instagram (5)
+  ["lamok", 5, 25, 2, 2], ["ipis", 13, 25, 2, 2], ["lamok", 6, 31, 3, 2], ["ipis", 10, 32, 2, 1], ["lamok", 12, 28, 2, 2],
+  // x (5)
+  ["lamok", 52, 24, 3, 2], ["ipis", 60, 25, 2, 2], ["lamok", 58, 31, 3, 2], ["ipis", 52, 32, 2, 2], ["lamok", 60, 28, 2, 2],
   // github (5)
-  ["lamok", 22, 11, 3, 2], ["lamok", 31, 11, 2, 2], ["ipis", 23, 17, 3, 2], ["ipis", 31, 18, 2, 2], ["lamok", 26, 19, 2, 1],
+  ["lamok", 30, 7, 3, 2], ["lamok", 39, 7, 2, 2], ["ipis", 31, 13, 3, 2], ["ipis", 39, 14, 2, 2], ["lamok", 34, 15, 2, 1],
   // blog (5)
-  ["lamok", 11, 39, 3, 2], ["ipis", 12, 45, 2, 2], ["lamok", 6, 46, 2, 1], ["ipis", 13, 41, 2, 1], ["lamok", 10, 47, 2, 1],
+  ["lamok", 10, 39, 3, 2], ["ipis", 11, 45, 2, 2], ["lamok", 5, 46, 2, 1], ["ipis", 12, 41, 2, 1], ["lamok", 9, 47, 2, 1],
   // threads (4)
-  ["lamok", 57, 11, 2, 2], ["ipis", 65, 9, 2, 2], ["lamok", 58, 16, 3, 2], ["ipis", 64, 16, 2, 2],
+  ["lamok", 52, 11, 2, 2], ["ipis", 60, 9, 2, 2], ["lamok", 53, 16, 3, 2], ["ipis", 59, 16, 2, 2],
 ];
 // guard: patrols stay ≥2 tiles from every door and never cover a bridge
 const doorTiles = Object.values(PLACE).map((pl) => [pl.x + pl.door, pl.y + 3]);
@@ -860,11 +842,11 @@ fs.writeFileSync(out("map/island.json"), JSON.stringify(map));
     .png()
     .toBuffer();
   await sharp(full).png().toFile(path.resolve("assets/island-full.png"));
-  // OG crop: south part of the main island (spawn, Barangay Hall, roads), 1200×630 nearest-neighbour
-  const cw = 38 * T;
+  // OG crop: the main island (the big three, spawn, roads), 1200×630 nearest-neighbour
+  const cw = 44 * T;
   const ch = Math.round((cw * 630) / 1200);
   await sharp(full)
-    .extract({ left: 9 * T, top: 29 * T, width: cw, height: ch })
+    .extract({ left: 11 * T, top: 23 * T, width: cw, height: ch })
     .resize(1200, 630, { kernel: "nearest" })
     .png()
     .toFile(path.resolve("assets/og-island.png"));

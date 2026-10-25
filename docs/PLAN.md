@@ -13,7 +13,7 @@ A Filipino-flavored, playable social hub for **@pogicodes**. **Sole goal: grow t
 | 5 | X | X Corner | +1 (click) |
 | 6 | GitHub | GitHub Dojo — secret, far end of island | +1 (click) |
 | 7 | Website (blog, carlogino.com) | Blog Library — south-west islet, bridge from spawn beach | +1 (click) |
-| 8 | Threads (@pogicodes) | Threads Lounge — east islet, bridge from X's X Corner | +1 (click) |
+| 8 | Threads (@pogicodes) | Threads Lounge — north-east islet, bridge from X's X Corner | +1 (click) |
 
 Bottom quick-link bar shows only Facebook, YouTube, TikTok, Instagram, X, GitHub (`navExclude` in `src/site.config.ts`).
 
@@ -65,7 +65,7 @@ Auto quick view when: reduced motion (with "Play anyway"), no WebGL, very slow d
 - ✅ Step 2 — Walkable island (Phaser 4): joystick + tap-to-walk + keyboard, doors → level cards, lamok/ipis, hearts, coins, ★ CLEARED, heal table, CONTINUE? screen, Follow all, menu, credits, Taglish lines, sound (off by default), auto quick view.
   - "Watched" = embed open & tab visible for 15s (FB/TikTok don't expose reliable progress without heavy SDKs).
 - ✅ Step 3 — ISLAND COMPLETE (confetti, "Salamat, idol!"), secret bridge to the hidden beach + chest → Teable `Secret` (`tblLdewX1xlberGLnUc`), share score (native share / Facebook / X / copy), OG image rendered from the island.
-- Map v3 (archipelago): main island (spawn + jeepney + Facebook Hall a few steps up the road) linked by 3-wide bridges to YouTube (W), TikTok (E), GitHub Dojo (N); Instagram via YouTube, X via TikTok; hidden beach (SE) bridge appears on ISLAND COMPLETE. Roads everywhere (auto-walk prefers them); manual steering has corner assist. Custom 16×24 Pogi (jersey + tsinelas).
+- Map v4 (archipelago): main island holds the big three in one row — YouTube · Facebook · TikTok, Facebook in the middle straight up the road from spawn + jeepney — linked by 3-wide bridges to Instagram (W), X (E), GitHub Dojo (N), blog (SW); Threads via X (NE); hidden beach (SE) bridge appears on ISLAND COMPLETE. Roads everywhere (auto-walk prefers them); manual steering has corner assist. Custom 16×24 Pogi (jersey + tsinelas).
 
 ## Phasing
 
